@@ -119,6 +119,7 @@ function clearLines(grid: Grid): { grid: Grid; cleared: number } {
 
 export default function Home() {
   const [started, setStarted] = useState(false);
+  const [username, setUsername] = useState("");
   const [grid, setGrid] = useState<Grid>(() => createEmptyGrid());
   const [piece, setPiece] = useState<Piece>(() => getRandomPiece());
   const [gameOver, setGameOver] = useState(false);
@@ -193,6 +194,7 @@ export default function Home() {
   }, [started, grid, gameOver]);
 
   const startGame = async () => {
+    if (!username.trim()) return;
     setStarted(true);
     setGameOver(false);
     setScore(0);
@@ -219,19 +221,47 @@ export default function Home() {
     }
   };
 
+  const handleNameSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    await startGame();
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center px-6 py-12">
       <audio ref={audioRef} src="/feeling-good.mp3" preload="auto" />
       <div className="flex w-full max-w-4xl flex-col items-center gap-6 rounded-3xl bg-white/85 p-8 text-neutral-900 shadow-2xl backdrop-blur-md">
-        <h1 className="text-4xl font-semibold">Hello World</h1>
-        <button
-          type="button"
-          onClick={startGame}
-          className="rounded-full bg-black px-6 py-3 text-lg font-semibold text-white transition hover:scale-105"
+        <h1 className="text-4xl font-semibold">
+          {started ? `Hello ${username}` : "Hello World"}
+        </h1>
+        <form onSubmit={handleNameSubmit} className="w-full max-w-md">
+          <div className="flex items-center gap-3 rounded-full border border-neutral-300 bg-white/90 px-4 py-3 shadow-sm">
+            <span className="text-base font-semibold text-neutral-700">Hello</span>
+            <input
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
+              placeholder="your name"
+              className="flex-1 bg-transparent text-lg font-semibold text-neutral-900 outline-none"
+              aria-label="Your name"
+            />
+          </div>
+          <p className="mt-2 text-sm text-neutral-600">
+            Press Enter to start Tetris and the music.
+          </p>
+        </form>
+        {started && (
+          <button
+            type="button"
+            onClick={resetGame}
+            className="rounded-full border border-neutral-800 px-4 py-2 text-sm font-semibold text-neutral-900"
+          >
+            Stop & Reset
+          </button>
+        )}
+        <div
+          className={`flex flex-wrap items-start justify-center gap-6 transition-all duration-700 ease-out ${
+            started ? "translate-y-0 opacity-100" : "-translate-y-24 opacity-0"
+          }`}
         >
-          {started ? "Restart Tetris" : "Start Tetris"}
-        </button>
-        <div className="flex flex-wrap items-start justify-center gap-6">
           <div className="grid grid-rows-[repeat(20,_1fr)] gap-1 rounded-xl bg-neutral-900 p-3 shadow-lg">
             {displayGrid.map((row, rowIndex) => (
               <div key={`row-${rowIndex}`} className="grid grid-cols-[repeat(10,_1fr)] gap-1">
@@ -254,15 +284,6 @@ export default function Home() {
               <div className="rounded-lg bg-red-100 p-3 text-sm font-semibold text-red-700">
                 Game Over
               </div>
-            )}
-            {started && (
-              <button
-                type="button"
-                onClick={resetGame}
-                className="rounded-full border border-neutral-800 px-4 py-2 text-sm font-semibold text-neutral-900"
-              >
-                Stop & Reset
-              </button>
             )}
           </div>
         </div>
