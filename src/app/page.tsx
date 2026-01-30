@@ -120,6 +120,7 @@ function clearLines(grid: Grid): { grid: Grid; cleared: number } {
 export default function Home() {
   const [started, setStarted] = useState(false);
   const [username, setUsername] = useState("");
+  const [hasName, setHasName] = useState(false);
   const [grid, setGrid] = useState<Grid>(() => createEmptyGrid());
   const [piece, setPiece] = useState<Piece>(() => getRandomPiece());
   const [gameOver, setGameOver] = useState(false);
@@ -223,13 +224,19 @@ export default function Home() {
 
   const handleNameSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!username.trim()) return;
+    setHasName(true);
     await startGame();
   };
+
+  const containerClassName = hasName
+    ? "flex w-full max-w-4xl flex-col items-center gap-6 rounded-3xl bg-white/85 p-8 text-neutral-900 shadow-2xl backdrop-blur-md transition-all duration-300"
+    : "flex flex-col items-center gap-6 transition-all duration-300";
 
   return (
     <div className="flex min-h-screen items-center justify-center px-6 py-12">
       <audio ref={audioRef} src="/feeling-good.mp3" preload="auto" />
-      <div className="flex w-full max-w-4xl flex-col items-center gap-6 rounded-3xl bg-white/85 p-8 text-neutral-900 shadow-2xl backdrop-blur-md">
+      <div className={containerClassName}>
         <h1 className="text-4xl font-semibold">
           {started ? `Hello ${username}` : "Hello World"}
         </h1>
