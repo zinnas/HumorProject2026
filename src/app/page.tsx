@@ -240,7 +240,7 @@ export default function Home() {
         <h1 className="text-4xl font-semibold">
           {started ? `Hello ${username}` : "Hello World"}
         </h1>
-        <form onSubmit={handleNameSubmit} className="w-full max-w-md">
+        <form onSubmit={handleNameSubmit} className="relative z-10 w-full max-w-md">
           <div className="flex items-center gap-3 rounded-full border border-neutral-300 bg-white/90 px-4 py-3 shadow-sm">
             <span className="text-base font-semibold text-neutral-700">Hello</span>
             <input
