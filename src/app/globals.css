@@ -21,7 +21,7 @@
 
 body {
   background-color: var(--background);
-  background-image: url("/winnie-the-pooh.png");
+  background-image: url("/winnie-the-pooh.jpg");
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
