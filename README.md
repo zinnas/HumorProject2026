@@ -20,6 +20,28 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Supabase Auth Setup (Google OAuth)
+
+Add these env vars (for local and Vercel):
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+Supabase dashboard URL config:
+- Allow redirect URL `http://localhost:3000/auth/callback`
+- Allow redirect URL `https://<vercel-domain>/auth/callback`
+
+Vercel setting:
+- Turn off Deployment Protection so an Incognito window can access the app.
+
+How to test:
+1. Open an Incognito window and visit `/protected`.
+2. Confirm you are redirected to `/login`.
+3. Click `Continue with Google` and complete sign-in.
+4. Confirm you return via `/auth/callback` and then land on `/protected`.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
