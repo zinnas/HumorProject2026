@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-
 import { createClient } from "@/utils/supabase/server";
 
 export async function GET(request: Request) {
@@ -11,6 +10,5 @@ export async function GET(request: Request) {
     await supabase.auth.exchangeCodeForSession(code);
   }
 
-  //return NextResponse.redirect(new URL("/protected", requestUrl.origin));
-  return NextResponse.redirect(`${origin}/images`);
+  return NextResponse.redirect(new URL("/", requestUrl.origin));
 }
