@@ -48,3 +48,17 @@ Treat these files and call-sites as sensitive and high-risk:
 ## File Preservation Rule
 - `AGENTS.md` and `AI_CHANGELOG.md` are append/update-safe instruction artifacts.
 - Do not overwrite these files in the future. Only make additive or minimally scoped edits that preserve existing history and rules.
+
+## Definition of "breaking auth"
+Any of the following is considered a breaking change:
+- Unauthenticated users can access protected pages
+- Session is not persisted correctly
+- OAuth login or callback fails
+- supabase.auth.getUser() returns inconsistent results
+- Middleware no longer enforces route protection
+
+## Testing requirement for auth changes
+- After any auth-related change:
+  - Verify login works
+  - Verify logout works
+  - Verify protected routes redirect when logged out
