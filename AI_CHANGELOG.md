@@ -425,3 +425,28 @@ Rollback plan:
 Verification performed:
 - Ran `npm test` (`npm run lint`) with 0 errors (existing `<img>` warning only).
 
+## Entry
+Timestamp: 2026-03-23 14:13:40 -04:00  
+Type: change  
+Task: Execute Step2.txt for `/api/caption-pipeline/upload-to-presigned-url` route behavior  
+Files changed:
+- `src/app/api/caption-pipeline/upload-to-presigned-url/route.ts`
+- `AI_CHANGELOG.md`
+Summary:
+- Added `POST /api/caption-pipeline/upload-to-presigned-url` App Router route.
+- Route accepts JSON body with `sourceImageUrl`, `presignedUrl`, and `contentType`.
+- Server flow implemented with async/await:
+  - fetch `sourceImageUrl`
+  - read bytes via `arrayBuffer()`
+  - `PUT` bytes to `presignedUrl` with `Content-Type` header from request body
+- Success response shape: `{ "ok": true, "uploadStatus": <status> }`.
+- Failure behavior implemented per step instructions:
+  - if source fetch fails, returns upstream status + body text
+  - if presigned PUT fails, returns upstream status + body text
+- Added `try/catch` with `console.error` and 500 fallback.
+Auth impact:
+- None. No auth logic changes.
+RLS impact:
+- None. No database policy/query changes.
+Verification performed:
+- Ran `npm test` (`npm run lint`) with 0 errors (existing `<img>` warning only).
