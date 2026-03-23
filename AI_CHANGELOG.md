@@ -369,3 +369,30 @@ RLS impact:
 - None. No query/policy/write logic changes.
 Verification performed:
 - Ran `npm test` (`npm run lint`) with 0 errors (existing `<img>` warning only).
+
+## Entry
+Timestamp: 2026-03-22 23:48:16 -04:00  
+Type: UI-only  
+Task: Move vote buttons above content card and tune dark neon color direction  
+Files changed:
+- `src/app/page.tsx`
+- `AI_CHANGELOG.md`
+Summary:
+- Moved vote action form so layout order is now:
+  1) title
+  2) question
+  3) centered Yes/No buttons
+  4) main content card (image + caption)
+- Kept floating card behavior and post-vote transition unchanged.
+- Updated page/card palette toward richer midnight navy with atmospheric soft glow accents:
+  - darker base in `#050816` to `#0B1020` range
+  - deep navy card surface around `#08122F`
+  - subtle purple (`#7C3AED`) and green (`#22C55E`) glow accents
+  - preserved yellow positive action button around `#FBBF24`
+  - text tones tuned to near `#F8FAFC` / `#CBD5E1`
+Auth impact:
+- None. No auth logic changes.
+RLS impact:
+- None. No query/write/policy changes.
+Verification performed:
+- Ran `npm test` (`npm run lint`) with 0 errors (existing `<img>` warning only).
