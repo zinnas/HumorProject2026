@@ -29,3 +29,18 @@ body {
   font-family: Arial, Helvetica, sans-serif;
   cursor: url("/panda-cursor.svg") 16 16, auto;
 }
+
+@keyframes reval-card-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 6px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, -7px, 0);
+  }
+}
+
+.reval-card-enter {
+  animation: reval-card-enter 0.25s ease;
+}

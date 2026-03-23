@@ -340,3 +340,32 @@ RLS impact:
 - None. No policy changes.
 Verification performed:
 - Ran `npm test` (`npm run lint`) with 0 errors (existing `<img>` warning only).
+
+## Entry
+Timestamp: 2026-03-22 23:37:02 -04:00  
+Type: UI-only  
+Task: Refactor re-evaluation page presentation to centered dark card layout with dominant image and motion polish  
+Files changed:
+- `src/app/page.tsx`
+- `src/app/globals.css`
+- `AI_CHANGELOG.md`
+Summary:
+- Updated page layout to centered card with max width ~700px on dark gradient background (`#0b0f1a` base).
+- Restyled card to `#0f172a`, 24px radius, deep shadow plus subtle purple glow.
+- Increased image dominance (`width: 100%`, `max-height: 70vh`, `object-fit: contain`, rounded 16px).
+- Caption now centered, larger, and higher-contrast.
+- Buttons centered with 16px gap and requested color treatment:
+  - No: dark with border
+  - Yes: yellow action style
+- Added floating card transform defaults/hover:
+  - default `translate3d(0,-7px,0)`
+  - hover `translate3d(0,-12px,0)`
+  - `transformStyle: preserve-3d`
+  - `willChange: transform`
+- Added subtle entry transition (`0.25s ease`) using fade + upward slide animation to simulate stacked-card progression.
+Auth impact:
+- None. No auth logic changes.
+RLS impact:
+- None. No query/policy/write logic changes.
+Verification performed:
+- Ran `npm test` (`npm run lint`) with 0 errors (existing `<img>` warning only).

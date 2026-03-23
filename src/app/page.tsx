@@ -26,13 +26,19 @@ type ExistingVoteRow = {
 function renderImage(url: string | null, alt: string): ReactElement {
   if (!url) {
     return (
-      <div className="flex h-48 items-center justify-center rounded-md bg-zinc-100 text-sm text-zinc-500">
+      <div className="flex h-[60vh] max-h-[70vh] w-full items-center justify-center rounded-[16px] border border-slate-700 bg-slate-950 text-sm text-slate-400">
         No image URL
       </div>
     );
   }
 
-  return <img src={url} alt={alt} className="h-48 w-full rounded-md object-cover" />;
+  return (
+    <img
+      src={url}
+      alt={alt}
+      className="h-[60vh] max-h-[70vh] w-full rounded-[16px] object-contain"
+    />
+  );
 }
 
 type SearchParams = {
@@ -162,10 +168,10 @@ export default async function Home({ searchParams }: HomeProps) {
 
   if (voteError) {
     return (
-      <main className="min-h-screen bg-zinc-50 px-6 py-10 text-zinc-900">
-        <div className="mx-auto max-w-3xl rounded-xl border border-red-300 bg-red-50 p-6">
-          <h1 className="text-xl font-semibold text-red-900">Could not load downvoted content</h1>
-          <p className="mt-2 text-sm text-red-800">{voteError.message}</p>
+      <main className="min-h-screen bg-[#0b0f1a] bg-gradient-to-b from-[#0b0f1a] via-[#0f172a] to-[#0b0f1a] px-6 py-10 text-slate-100">
+        <div className="mx-auto max-w-[700px] rounded-[24px] border border-red-800/60 bg-[#0f172a] p-6 shadow-[0_10px_30px_rgba(0,0,0,0.6),0_0_24px_rgba(124,58,237,0.15)]">
+          <h1 className="text-xl font-semibold text-red-300">Could not load downvoted content</h1>
+          <p className="mt-2 text-sm text-red-200">{voteError.message}</p>
         </div>
       </main>
     );
@@ -183,10 +189,10 @@ export default async function Home({ searchParams }: HomeProps) {
 
   if (!selectedCaptionId) {
     return (
-      <main className="min-h-screen bg-zinc-50 px-6 py-10 text-zinc-900">
-        <div className="mx-auto max-w-2xl space-y-2 rounded-xl border border-zinc-200 bg-white p-8 shadow-sm">
+      <main className="min-h-screen bg-[#0b0f1a] bg-gradient-to-b from-[#0b0f1a] via-[#0f172a] to-[#0b0f1a] px-6 py-10 text-slate-100">
+        <div className="mx-auto max-w-[700px] space-y-2 rounded-[24px] border border-slate-800 bg-[#0f172a] p-8 shadow-[0_10px_30px_rgba(0,0,0,0.6),0_0_24px_rgba(124,58,237,0.15)]">
           <h1 className="text-2xl font-semibold">Re-evaluate Content</h1>
-          <p className="text-sm text-zinc-600">You&apos;re done for now.</p>
+          <p className="text-sm text-slate-300">You&apos;re done for now.</p>
         </div>
       </main>
     );
@@ -202,10 +208,10 @@ export default async function Home({ searchParams }: HomeProps) {
 
   if (captionError) {
     return (
-      <main className="min-h-screen bg-zinc-50 px-6 py-10 text-zinc-900">
-        <div className="mx-auto max-w-3xl rounded-xl border border-red-300 bg-red-50 p-6">
-          <h1 className="text-xl font-semibold text-red-900">Could not load caption for vote</h1>
-          <p className="mt-2 text-sm text-red-800">{captionError.message}</p>
+      <main className="min-h-screen bg-[#0b0f1a] bg-gradient-to-b from-[#0b0f1a] via-[#0f172a] to-[#0b0f1a] px-6 py-10 text-slate-100">
+        <div className="mx-auto max-w-[700px] rounded-[24px] border border-red-800/60 bg-[#0f172a] p-6 shadow-[0_10px_30px_rgba(0,0,0,0.6),0_0_24px_rgba(124,58,237,0.15)]">
+          <h1 className="text-xl font-semibold text-red-300">Could not load caption for vote</h1>
+          <p className="mt-2 text-sm text-red-200">{captionError.message}</p>
         </div>
       </main>
     );
@@ -214,21 +220,31 @@ export default async function Home({ searchParams }: HomeProps) {
   const linkedImage = caption.images;
 
   return (
-    <main className="min-h-screen bg-zinc-50 px-6 py-10 text-zinc-900">
-      <div className="mx-auto max-w-2xl space-y-6">
+    <main className="min-h-screen bg-[#0b0f1a] bg-gradient-to-b from-[#0b0f1a] via-[#0f172a] to-[#0b0f1a] px-6 py-10 text-slate-100">
+      <div className="mx-auto max-w-[700px] space-y-6">
         <header className="space-y-2">
-          <h1 className="text-3xl font-bold">Re-evaluate Content</h1>
-          <p className="text-sm text-zinc-600">Do you find this image weird?</p>
+          <h1 className="text-center text-3xl font-bold">Re-evaluate Content</h1>
+          <p className="text-center text-sm text-slate-300">Do you find this image weird?</p>
         </header>
 
         <section>
-          <article className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
+          <article
+            className="reval-card-enter rounded-[24px] border border-slate-800 bg-[#0f172a] p-5 transition-transform duration-250 ease-in-out translate-y-[-7px] hover:translate-y-[-12px]"
+            style={{
+              transformStyle: "preserve-3d",
+              willChange: "transform",
+              boxShadow:
+                "0 10px 30px rgba(0,0,0,0.6), 0 0 24px rgba(124,58,237,0.15)",
+            }}
+          >
             {renderImage(linkedImage?.url ?? null, "Image")}
-            <div className="mt-4 space-y-2 text-sm">
-              <p className="font-semibold">{caption.content ?? "No caption text available."}</p>
+            <div className="mt-5 space-y-2 text-sm">
+              <p className="text-center text-[20px] font-semibold text-[#f9fafb]">
+                {caption.content ?? "No caption text available."}
+              </p>
             </div>
 
-            <form action={handleVote} className="mt-6 flex gap-3">
+            <form action={handleVote} className="mt-7 flex justify-center gap-4">
               <input type="hidden" name="caption_id" value={caption.id} />
               <input
                 type="hidden"
@@ -238,18 +254,18 @@ export default async function Home({ searchParams }: HomeProps) {
               <button
                 type="submit"
                 name="vote_value"
-                value="1"
-                className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700"
+                value="-1"
+                className="rounded-full border border-[#1e293b] bg-[#020617] px-6 py-3 text-sm font-medium text-[#e5e7eb] transition-transform duration-200 hover:-translate-y-0.5"
               >
-                Yes
+                No
               </button>
               <button
                 type="submit"
                 name="vote_value"
-                value="-1"
-                className="rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-100"
+                value="1"
+                className="rounded-full bg-[#fbbf24] px-6 py-3 text-sm font-bold text-black transition-transform duration-200 hover:-translate-y-0.5"
               >
-                No
+                Yes
               </button>
             </form>
           </article>
