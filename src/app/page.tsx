@@ -36,7 +36,7 @@ function renderImage(url: string | null, alt: string): ReactElement {
 }
 
 type SearchParams = {
-  exclude_caption_id?: string;
+  processed_caption_ids?: string;
 };
 
 type HomeProps = {
@@ -46,6 +46,12 @@ type HomeProps = {
 export default async function Home({ searchParams }: HomeProps) {
   const supabase = await createClient();
   const resolvedSearchParams = searchParams ? await searchParams : {};
+  const processedCaptionIdsParam = resolvedSearchParams.processed_caption_ids ?? "";
+  const processedCaptionIds = processedCaptionIdsParam
+    .split(",")
+    .map((captionId) => captionId.trim())
+    .filter((captionId) => captionId.length > 0);
+  const processedCaptionIdSet = new Set(processedCaptionIds);
 
   const {
     data: { user },
@@ -69,13 +75,28 @@ export default async function Home({ searchParams }: HomeProps) {
 
     const captionIdRaw = formData.get("caption_id");
     const nextVoteRaw = formData.get("vote_value");
+    const processedIdsRaw = formData.get("processed_caption_ids");
 
-    if (typeof captionIdRaw !== "string" || typeof nextVoteRaw !== "string") {
+    if (
+      typeof captionIdRaw !== "string" ||
+      typeof nextVoteRaw !== "string" ||
+      typeof processedIdsRaw !== "string"
+    ) {
       throw new Error("Missing vote payload.");
     }
 
     const captionId = captionIdRaw.trim();
     const nextVote = Number(nextVoteRaw);
+    const nextProcessedCaptionIds = Array.from(
+      new Set(
+        processedIdsRaw
+          .split(",")
+          .map((id) => id.trim())
+          .filter((id) => id.length > 0)
+          .concat(captionId),
+      ),
+    );
+    const nextProcessedCaptionIdsParam = encodeURIComponent(nextProcessedCaptionIds.join(","));
 
     if (!captionId || (nextVote !== 1 && nextVote !== -1)) {
       throw new Error("Invalid vote payload.");
@@ -97,7 +118,7 @@ export default async function Home({ searchParams }: HomeProps) {
     const existingVote = existingVotes?.[0] ?? null;
 
     if (existingVote?.vote_value === nextVote) {
-      redirect(`/?exclude_caption_id=${encodeURIComponent(captionId)}`);
+      redirect(`/?processed_caption_ids=${nextProcessedCaptionIdsParam}`);
     }
 
     if (existingVote) {
@@ -113,7 +134,7 @@ export default async function Home({ searchParams }: HomeProps) {
         throw new Error(updateError.message);
       }
 
-      redirect(`/?exclude_caption_id=${encodeURIComponent(captionId)}`);
+      redirect(`/?processed_caption_ids=${nextProcessedCaptionIdsParam}`);
     }
 
     const { error: insertError } = await actionSupabase
@@ -129,7 +150,7 @@ export default async function Home({ searchParams }: HomeProps) {
       throw new Error(insertError.message);
     }
 
-    redirect(`/?exclude_caption_id=${encodeURIComponent(captionId)}`);
+    redirect(`/?processed_caption_ids=${nextProcessedCaptionIdsParam}`);
   }
 
   const { data: downvotedVotes, error: voteError } = await supabase
@@ -154,10 +175,9 @@ export default async function Home({ searchParams }: HomeProps) {
     new Set((downvotedVotes ?? []).map((vote) => vote.caption_id)),
   );
 
-  const excludedCaptionId = resolvedSearchParams.exclude_caption_id?.trim();
-  const eligibleCaptionIds = excludedCaptionId
-    ? distinctCaptionIds.filter((captionId) => captionId !== excludedCaptionId)
-    : distinctCaptionIds;
+  const eligibleCaptionIds = distinctCaptionIds.filter(
+    (captionId) => !processedCaptionIdSet.has(captionId),
+  );
 
   const selectedCaptionId = eligibleCaptionIds[0];
 
@@ -210,6 +230,11 @@ export default async function Home({ searchParams }: HomeProps) {
 
             <form action={handleVote} className="mt-6 flex gap-3">
               <input type="hidden" name="caption_id" value={caption.id} />
+              <input
+                type="hidden"
+                name="processed_caption_ids"
+                value={processedCaptionIds.join(",")}
+              />
               <button
                 type="submit"
                 name="vote_value"

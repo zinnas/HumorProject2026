@@ -313,3 +313,30 @@ RLS impact:
 - None. No policy changes.
 Verification performed:
 - Ran `npm test` (`npm run lint`) with 0 errors (existing `<img>` warning only).
+
+## Entry
+Timestamp: 2026-03-22 23:14:19 -04:00  
+Type: fix  
+Task: Prevent processed items from reappearing within the same re-evaluation session flow  
+Files changed:
+- `src/app/page.tsx`
+- `AI_CHANGELOG.md`
+Brief debug/root cause:
+- Prior flow only tracked one exclusion (`exclude_caption_id`), so after voting A then B, redirect excluded only B and A became eligible again.
+- Candidate pool was recomputed globally each request without a processed set, causing immediate recycle.
+Fix applied (minimal/session-level):
+- Replaced single exclusion cursor with `processed_caption_ids` flow state.
+- Read `processed_caption_ids` from `searchParams` and treat as processed set for this session flow.
+- Keep candidate pool rule unchanged: DISTINCT global `caption_id` where at least one vote row has `vote_value = -1`.
+- Select next item from candidate pool minus processed set.
+- On successful vote submit (unchanged/update/insert), append current `caption_id` to processed set and redirect to `/?processed_caption_ids=...`.
+- If no eligible unprocessed items remain, show `You&apos;re done for now.`
+Write behavior:
+- Unchanged: auth user as `profile_id`, `(profile_id, caption_id)` semantics, skip unchanged vote, update-or-insert otherwise.
+Auth impact:
+- No auth flow changes.
+- Middleware/callback unchanged.
+RLS impact:
+- None. No policy changes.
+Verification performed:
+- Ran `npm test` (`npm run lint`) with 0 errors (existing `<img>` warning only).
