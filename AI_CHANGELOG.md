@@ -396,3 +396,32 @@ RLS impact:
 - None. No query/write/policy changes.
 Verification performed:
 - Ran `npm test` (`npm run lint`) with 0 errors (existing `<img>` warning only).
+
+## Entry
+Timestamp: 2026-03-23 13:46:47 -04:00  
+Type: change  
+Task: Execute Step1.txt for `/api/caption-pipeline/presigned-url` route behavior  
+Files changed:
+- `src/app/api/caption-pipeline/presigned-url/route.ts`
+- `AI_CHANGELOG.md`
+Summary:
+- Kept existing authenticated server route structure using Supabase server client.
+- Verified route checks `supabase.auth.getUser()` and returns 401 when unauthenticated.
+- Verified route fetches `supabase.auth.getSession()` and uses `session.access_token`, returning 401 if missing.
+- Verified upstream call target and payload:
+  - `POST https://api.almostcrackd.ai/pipeline/generate-presigned-url`
+  - body `{ \"contentType\": \"image/jpeg\" }`
+- Adjusted response handling to return upstream JSON directly via `NextResponse.json(data, { status })` as required.
+Auth impact:
+- Auth flow unchanged.
+- No service-role keys introduced.
+- No client-provided user identity trusted.
+RLS impact:
+- None. No database policy/query changes.
+Risk assessment:
+- Low. Route-level response-format alignment only.
+Rollback plan:
+- Revert `src/app/api/caption-pipeline/presigned-url/route.ts` to previous commit state.
+Verification performed:
+- Ran `npm test` (`npm run lint`) with 0 errors (existing `<img>` warning only).
+
