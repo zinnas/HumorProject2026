@@ -4,15 +4,7 @@ import { createClient } from "@/utils/supabase/server";
 
 type ImageRow = {
   id: string;
-  created_datetime_utc: string;
-  modified_datetime_utc: string | null;
   url: string | null;
-  is_common_use: boolean | null;
-  profile_id: string | null;
-  additional_context: string | null;
-  is_public: boolean | null;
-  image_description: string | null;
-  celebrity_recognition: string | null;
 };
 
 type CaptionRow = {
@@ -80,16 +72,20 @@ export default async function Home() {
       throw new Error("Invalid vote payload.");
     }
 
-    const { data: existingVote, error: existingVoteError } = await actionSupabase
+    const { data: existingVotes, error: existingVoteError } = await actionSupabase
       .from("caption_votes")
       .select("id,vote_value")
       .eq("caption_id", captionId)
       .eq("profile_id", actionUser.id)
-      .maybeSingle<ExistingVoteRow>();
+      .order("id", { ascending: true })
+      .limit(1)
+      .returns<ExistingVoteRow[]>();
 
     if (existingVoteError) {
       throw new Error(existingVoteError.message);
     }
+
+    const existingVote = existingVotes?.[0] ?? null;
 
     if (existingVote?.vote_value === nextVote) {
       return;
@@ -101,7 +97,6 @@ export default async function Home() {
         .update({
           vote_value: nextVote,
         })
-        .eq("id", existingVote.id)
         .eq("profile_id", actionUser.id)
         .eq("caption_id", captionId);
 
@@ -164,7 +159,7 @@ export default async function Home() {
   const { data: caption, error: captionError } = await supabase
     .from("captions")
     .select(
-      "id,content,image_id,images(id,created_datetime_utc,modified_datetime_utc,url,is_common_use,profile_id,additional_context,is_public,image_description,celebrity_recognition)",
+      "id,content,image_id,images(id,url)",
     )
     .eq("id", selectedCaptionId)
     .single<CaptionRow>();
@@ -192,12 +187,9 @@ export default async function Home() {
 
         <section>
           <article className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
-            {renderImage(linkedImage?.url ?? null, linkedImage?.image_description ?? "Image")}
+            {renderImage(linkedImage?.url ?? null, "Image")}
             <div className="mt-4 space-y-2 text-sm">
               <p className="font-semibold">{caption.content ?? "No caption text available."}</p>
-              {linkedImage?.image_description ? (
-                <p className="text-zinc-600">{linkedImage.image_description}</p>
-              ) : null}
             </div>
 
             <form action={handleVote} className="mt-6 flex gap-3">

@@ -219,3 +219,67 @@ Verification performed:
 Confirmation that existing rows are updated and not duplicated:
 - Implemented explicit existing-row check by `(profile_id, caption_id)` before write.
 - Existing matching row uses `UPDATE`, not `INSERT`.
+
+## Entry
+Timestamp: 2026-03-22 22:37:05 -04:00  
+Type: fix  
+Task: Fix re-evaluation vote submit wiring and remove non-caption descriptive rendering  
+Files changed:
+- `src/app/page.tsx`
+- `AI_CHANGELOG.md`
+Root cause found (buttons not working):
+- Vote submit path used `.maybeSingle()` for `(profile_id, caption_id)` lookup.
+- If more than one row exists for that key in current data, `.maybeSingle()` returns an error and server action aborts, so click appears to fail.
+Fix applied:
+- Switched existing-vote lookup to non-throwing array query with `.limit(1)`.
+- Kept write semantics:
+  - unchanged vote => skip write
+  - existing `(profile_id, caption_id)` => `UPDATE`
+  - missing `(profile_id, caption_id)` => `INSERT`
+- Kept writes server-side and authenticated via `supabase.auth.getUser()` (`auth.uid()` as `profile_id`).
+Rendering fix applied:
+- Removed `image_description` text from UI.
+- Reduced caption->image query to `images(id,url)` and render only exact linked image + caption text.
+Auth impact:
+- Auth flow unchanged.
+- Middleware and callback remain unchanged.
+RLS impact:
+- None. No policy changes.
+Risk assessment:
+- Low. Minimal wiring/render adjustment in page-level feature code only.
+Rollback plan:
+- Revert `src/app/page.tsx` to previous commit state.
+Verification performed:
+- Ran `npm test` (`npm run lint`): passed with 0 errors (existing `<img>` warning only).
+Confirmation on duplicate prevention behavior:
+- Update path is keyed by `(profile_id, caption_id)`; insert occurs only when no row is found for that key.
+
+## Entry
+Timestamp: 2026-03-22 22:41:36 -04:00  
+Type: correction  
+Task: Correct root-cause analysis for non-working vote buttons in prior implementation  
+Files changed:
+- `AI_CHANGELOG.md`
+Corrected analysis:
+- Prior explanation over-focused on `.maybeSingle()` duplicate-row failure.
+- User verification showed no duplicate `(profile_id, caption_id)` rows, so that is not the operative cause.
+Exact `.maybeSingle()` query used previously:
+- Table: `caption_votes`
+- Filters:
+  - `.eq("caption_id", captionId)`
+  - `.eq("profile_id", actionUser.id)`
+- Projection: `.select("id,vote_value")`
+- Method: `.maybeSingle()`
+How this could still appear broken with no duplicates:
+- The read query can succeed, but the subsequent update path previously filtered by bigint `id`:
+  - `.eq("id", existingVote.id).eq("profile_id", actionUser.id).eq("caption_id", captionId)`
+- `caption_votes.id` is `bigint`; using JS `number` for `existingVote.id` can lose precision for large ids, causing the update filter to match zero rows without necessarily throwing.
+- Result: click submits, but no row changes, appearing as "buttons not working".
+Root cause classification:
+- Not wrong join.
+- Not server action wiring failure.
+- Not duplicate-key failure from `.maybeSingle()` in this dataset.
+- Most likely: write-path filter precision mismatch on bigint `id` (and overly strict id-based update filter).
+Current fix relevance:
+- Current code updates by `(profile_id, caption_id)` instead of bigint `id`, avoiding this precision-risk path.
+- Rendering fix (remove `image_description`) remains valid and unchanged.
