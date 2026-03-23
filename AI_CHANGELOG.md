@@ -495,3 +495,30 @@ Rollback plan:
 - Revert `src/app/api/caption-pipeline/register-image/route.ts` to the previous placeholder commit state.
 Verification performed:
 - Ran `npm test` (`npm run lint`) with 0 errors (existing `<img>` warning only).
+
+## Entry
+Timestamp: 2026-03-23 15:40:08 -04:00  
+Type: change  
+Task: Add `/api/caption-pipeline/generate-captions` server route  
+Files changed:
+- `src/app/api/caption-pipeline/generate-captions/route.ts`
+- `AI_CHANGELOG.md`
+Summary:
+- Added `POST /api/caption-pipeline/generate-captions` App Router route.
+- Uses server-side Supabase auth checks via `supabase.auth.getUser()` and `supabase.auth.getSession()`.
+- Returns `401` JSON for missing user or missing access token.
+- Validates request body and returns `400` JSON when `imageId` is missing.
+- Calls upstream `POST https://api.almostcrackd.ai/pipeline/generate-captions` with bearer token and JSON body `{ imageId }`.
+- Returns upstream JSON directly with upstream status.
+- Uses async/await with `try/catch` and `console.error`.
+Auth impact:
+- Added auth enforcement for the new route following existing server-only auth patterns.
+- No auth bypasses introduced; unauthenticated access is rejected.
+RLS impact:
+- None. No database policy/query changes.
+Risk assessment:
+- Low to medium. Depends on valid Supabase session token and upstream API response behavior.
+Rollback plan:
+- Revert `src/app/api/caption-pipeline/generate-captions/route.ts`.
+Verification performed:
+- Ran `npm test` (`npm run lint`) with 0 errors (existing `<img>` warning only).
