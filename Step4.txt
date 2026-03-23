@@ -1,0 +1,50 @@
+Step 4:
+Replace the placeholder implementation in:
+
+src/app/api/caption-pipeline/register-image/route.ts
+
+with a real Next.js App Router POST handler that does exactly Step 3 of the AlmostCrackd caption pipeline.
+
+Requirements:
+
+- Import NextResponse from "next/server"
+- Import createClient from "@/utils/supabase/server"
+- Use server-side Supabase auth:
+  - const supabase = await createClient()
+  - const { data: { user } } = await supabase.auth.getUser()
+  - if no user, return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+- Get the current session:
+  - const { data: { session } } = await supabase.auth.getSession()
+  - const token = session?.access_token
+  - if no token, return 401 JSON
+
+- Read POST JSON body:
+  {
+    "imageUrl": string,
+    "isCommonUse": boolean
+  }
+
+- Validate:
+  - if imageUrl is missing, return 400 JSON
+  - default isCommonUse to false if omitted
+
+- Call upstream:
+  POST https://api.almostcrackd.ai/pipeline/upload-image-from-url
+
+- Upstream headers:
+  Authorization: Bearer <session.access_token>
+  Content-Type: application/json
+
+- Upstream body:
+  {
+    "imageUrl": imageUrl,
+    "isCommonUse": isCommonUse
+  }
+
+- Return the upstream response JSON directly with the upstream status code
+
+- Use async/await
+- Use try/catch and console.error
+- Remove any "Not implemented" placeholder completely
+- Keep the file minimal and TypeScript-compatible

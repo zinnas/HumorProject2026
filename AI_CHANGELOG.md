@@ -450,3 +450,48 @@ RLS impact:
 - None. No database policy/query changes.
 Verification performed:
 - Ran `npm test` (`npm run lint`) with 0 errors (existing `<img>` warning only).
+
+## Entry
+Timestamp: 2026-03-23 15:15:10 -04:00  
+Type: change  
+Task: Create `src/app/api/caption-pipeline/register-image/route.ts`  
+Files changed:
+- `src/app/api/caption-pipeline/register-image/route.ts`
+- `AI_CHANGELOG.md`
+Summary:
+- Added new App Router API route file for `POST /api/caption-pipeline/register-image`.
+- Implemented a minimal TypeScript-compatible stub that returns HTTP 501 with a JSON body.
+Auth impact:
+- None. No auth logic changes.
+RLS impact:
+- None. No database policy/query changes.
+Verification performed:
+- Ran `npm test` (`npm run lint`) with 0 errors (existing `<img>` warning only).
+
+## Entry
+Timestamp: 2026-03-23 15:23:37 -04:00  
+Type: change  
+Task: Execute Step4.txt for `/api/caption-pipeline/register-image` route behavior  
+Files changed:
+- `src/app/api/caption-pipeline/register-image/route.ts`
+- `AI_CHANGELOG.md`
+Summary:
+- Replaced placeholder implementation with real `POST /api/caption-pipeline/register-image` App Router handler.
+- Added server-side Supabase auth checks with `supabase.auth.getUser()` and `supabase.auth.getSession()`.
+- Returns `401` JSON when user is unauthenticated or access token is missing.
+- Reads JSON body with `imageUrl` and `isCommonUse`, defaults `isCommonUse` to `false`.
+- Returns `400` JSON when `imageUrl` is missing.
+- Calls upstream `POST https://api.almostcrackd.ai/pipeline/upload-image-from-url` with bearer token and JSON body.
+- Returns upstream JSON directly with upstream status code.
+- Added `try/catch` with `console.error` and `500` fallback.
+Auth impact:
+- Auth checks were added to this route and follow existing server-side auth patterns.
+- No auth bypasses introduced; unauthenticated requests are rejected with `401`.
+RLS impact:
+- None. No database policy/query changes.
+Risk assessment:
+- Low to medium. Route now depends on valid session/token and upstream API availability/response shape.
+Rollback plan:
+- Revert `src/app/api/caption-pipeline/register-image/route.ts` to the previous placeholder commit state.
+Verification performed:
+- Ran `npm test` (`npm run lint`) with 0 errors (existing `<img>` warning only).

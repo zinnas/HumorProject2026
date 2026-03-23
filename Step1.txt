@@ -1,0 +1,37 @@
+Create a Next.js App Router API route at:
+
+src/app/api/caption-pipeline/presigned-url/route.ts
+
+This app already uses Supabase Auth with a server client at "@/utils/supabase/server".
+
+Requirements:
+
+1. Verify the user with:
+   const { data: { user } } = await supabase.auth.getUser();
+   If no user, return 401.
+
+2. Get the session and access token:
+   const { data: { session } } = await supabase.auth.getSession();
+   Use session.access_token.
+   If missing, return 401.
+
+3. Call this API:
+   POST https://api.almostcrackd.ai/pipeline/generate-presigned-url
+
+4. Use headers:
+   Authorization: Bearer <session.access_token>
+   Content-Type: application/json
+
+5. Use body:
+   {
+     "contentType": "image/jpeg"
+   }
+
+6. Return the response JSON directly to the client.
+
+7. Use NextResponse, async/await, and basic try/catch logging.
+
+Constraints:
+- Do NOT use service role keys
+- Do NOT trust client-provided user ID
+- Keep it minimal and correct

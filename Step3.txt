@@ -1,0 +1,11 @@
+fetch("/api/caption-pipeline/upload-to-presigned-url", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    sourceImageUrl: "https://humorproject-bucket.s3.us-east-2.amazonaws.com/shrek.jpg",
+    presignedUrl: ""https://nonchalant-staging-presignedurluploadsbucket-bfhhkxbh.s3.us-east-1.amazonaws.com/8da93743-3bb5-420e-93ff-88b3ff50d285/f44c8557-9f10-40d8-bf35-c877d07198b5.jpeg?X-Amz-Algorithm=AWS4-HMAC-SHA256&...";",
+    contentType: "image/jpeg"
+  }),
+})
+  .then(res => res.text())
+  .then(console.log);

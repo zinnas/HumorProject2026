@@ -1,0 +1,33 @@
+Create a Next.js App Router API route at:
+
+src/app/api/caption-pipeline/upload-to-presigned-url/route.ts
+
+Goal:
+Implement Step 2 of the caption pipeline on the server, not in the browser.
+
+Behavior:
+- Accept POST JSON body with:
+  {
+    "sourceImageUrl": "https://humorproject-bucket.s3.us-east-2.amazonaws.com/shrek.jpg",
+    "presignedUrl": "<the exact presignedUrl from Step 1>",
+    "contentType": "image/jpeg"
+  }
+
+- On the server:
+  1. fetch the sourceImageUrl
+  2. read the image bytes as an ArrayBuffer
+  3. PUT those bytes to presignedUrl
+  4. send header Content-Type: image/jpeg on the PUT
+  5. return JSON like:
+     {
+       "ok": true,
+       "uploadStatus": 200
+     }
+
+Error handling:
+- If fetching sourceImageUrl fails, return its status and body text
+- If PUT to presignedUrl fails, return its status and body text
+- Use NextResponse
+- Use async/await
+- Add try/catch with console.error
+- Keep it minimal and TypeScript-compatible
