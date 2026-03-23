@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 
-export async function POST() {
+type PresignedUrlRequestBody = {
+  contentType?: string;
+};
+
+export async function POST(request: Request) {
   try {
     const supabase = await createClient();
 
@@ -23,6 +27,12 @@ export async function POST() {
       return NextResponse.json({ error: "Missing access token" }, { status: 401 });
     }
 
+    const body = ((await request.json().catch(() => ({}))) ?? {}) as PresignedUrlRequestBody;
+    const contentType =
+      typeof body.contentType === "string" && body.contentType.trim().length > 0
+        ? body.contentType
+        : "image/jpeg";
+
     const upstreamRes = await fetch(
       "https://api.almostcrackd.ai/pipeline/generate-presigned-url",
       {
@@ -32,7 +42,7 @@ export async function POST() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          contentType: "image/jpeg",
+          contentType,
         }),
       }
     );

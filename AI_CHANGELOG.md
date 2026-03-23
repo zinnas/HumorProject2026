@@ -522,3 +522,42 @@ Rollback plan:
 - Revert `src/app/api/caption-pipeline/generate-captions/route.ts`.
 Verification performed:
 - Ran `npm test` (`npm run lint`) with 0 errors (existing `<img>` warning only).
+
+## Entry
+Timestamp: 2026-03-23 16:12:19 -04:00  
+Type: change  
+Task: Execute Step5.txt image upload modal and caption pipeline UI flow  
+Files changed:
+- `src/app/upload-modal.tsx`
+- `src/app/page.tsx`
+- `src/app/api/caption-pipeline/presigned-url/route.ts`
+- `AI_CHANGELOG.md`
+Summary:
+- Added client upload modal component with dark neon/floating-card styling and top-right `Upload` button integration on main page.
+- Modal includes:
+  - image file input (accepted MIME types: jpeg/jpg/png/webp/gif/heic)
+  - local preview of selected image
+  - submit button with loading/disabled state
+  - close button and outside-click close behavior
+  - inline user-friendly error and success states
+- Implemented client pipeline flow in order:
+  1. `POST /api/caption-pipeline/presigned-url` with selected file `contentType`
+  2. `PUT` selected file bytes to returned `presignedUrl`
+  3. `POST /api/caption-pipeline/register-image` with returned `cdnUrl`
+  4. `POST /api/caption-pipeline/generate-captions` with resolved `imageId`
+- On success, stores generated captions payload in component state and logs it for future UI usage.
+- Updated `/api/caption-pipeline/presigned-url` route to accept optional request `contentType` while defaulting to `image/jpeg`.
+Auth impact:
+- Existing auth checks in `/api/caption-pipeline/presigned-url` (`getUser`, `getSession`, token validation) were preserved unchanged.
+- No client-provided user identity is trusted; secure calls still route through existing server API endpoints.
+RLS impact:
+- None. No database policy/query changes.
+Risk assessment:
+- Medium. UI flow now depends on multi-step API success and upstream response field consistency (`presignedUrl`, `cdnUrl`, `imageId`).
+Rollback plan:
+- Revert:
+  - `src/app/upload-modal.tsx`
+  - `src/app/page.tsx`
+  - `src/app/api/caption-pipeline/presigned-url/route.ts`
+Verification performed:
+- Ran `npm test` (`npm run lint`) with 0 errors (existing `<img>` warning only).

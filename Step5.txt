@@ -1,0 +1,70 @@
+#Step 5- Implementing UI
+Add an image upload UI to the existing Next.js App Router app.
+
+Goal:
+Allow authenticated users to upload an image through the app, then run the existing caption pipeline flow and save the result using the routes that already work.
+
+UI requirements:
+- Add a button labeled "Upload" in the top-right corner of the main page
+- When clicked, open a modal / popup overlay
+- The modal should contain:
+  - a file input that accepts images
+  - a preview of the selected image if possible
+  - a "Submit" button
+  - a "Close" button
+- The modal should match the app’s existing dark neon / floating-card visual style
+- The modal should be accessible:
+  - close on Close button
+  - close on outside click if easy
+  - disable Submit while upload is in progress
+  - show loading state and error message if something fails
+
+Functional requirements:
+- Accept common image types:
+  - image/jpeg
+  - image/jpg
+  - image/png
+  - image/webp
+  - image/gif
+  - image/heic
+- When the user selects an image and clicks Submit, use the existing working caption pipeline routes in this order:
+  1. POST /api/caption-pipeline/presigned-url
+  2. upload the selected file bytes to the returned presignedUrl
+  3. POST /api/caption-pipeline/register-image using the returned cdnUrl
+  4. POST /api/caption-pipeline/generate-captions using the returned imageId
+- Handle errors at each step and show a user-friendly error in the modal
+- On success:
+  - show a success message
+  - log or store the returned caption results in component state for now
+  - close the modal only after success, or keep it open and show success state if that is cleaner
+
+Implementation requirements:
+- Modify the existing main page instead of creating a separate page
+- Reuse the existing project structure and styling patterns
+- Do not break the current authenticated flow or existing functionality
+- Do not use service-role keys
+- Do not trust client-provided user identity
+- Keep all secure calls going through the existing server API routes
+- Use TypeScript
+- Keep the implementation clean and minimal
+- Add any small helper state/hooks/components only if needed
+
+Suggested implementation details:
+- Add state for:
+  - modal open/closed
+  - selected file
+  - preview URL
+  - loading
+  - error
+  - success
+  - generated captions
+- Use a client component for the upload interaction if needed
+- Validate that a file is selected before submit
+- Use the selected file’s MIME type when calling /api/caption-pipeline/presigned-url
+- Use fetch PUT directly to the returned presignedUrl with the file as body
+- After successful upload and caption generation, keep the results available for future UI use
+
+Deliverables:
+- Update the relevant page/component files
+- Include all code needed for the modal and upload flow
+- Keep changes production-safe and aligned with the current app architecture

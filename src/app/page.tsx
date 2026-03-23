@@ -1,6 +1,7 @@
 import type { ReactElement } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
+import UploadModal from "./upload-modal";
 
 type ImageRow = {
   id: string;
@@ -169,9 +170,16 @@ export default async function Home({ searchParams }: HomeProps) {
   if (voteError) {
     return (
       <main className="min-h-screen bg-[#050816] bg-[radial-gradient(circle_at_top,rgba(124,58,237,0.12),transparent_40%),radial-gradient(circle_at_bottom_right,rgba(34,197,94,0.10),transparent_35%),linear-gradient(180deg,#050816_0%,#0B1020_100%)] px-6 py-10 text-slate-100">
-        <div className="mx-auto max-w-[700px] rounded-[24px] border border-red-900/60 bg-[#08122F] p-6 shadow-[0_10px_30px_rgba(0,0,0,0.6),0_0_24px_rgba(124,58,237,0.12)]">
-          <h1 className="text-xl font-semibold text-red-300">Could not load downvoted content</h1>
-          <p className="mt-2 text-sm text-red-200">{voteError.message}</p>
+        <div className="mx-auto max-w-[700px]">
+          <div className="mb-4 flex justify-end">
+            <UploadModal />
+          </div>
+          <div className="rounded-[24px] border border-red-900/60 bg-[#08122F] p-6 shadow-[0_10px_30px_rgba(0,0,0,0.6),0_0_24px_rgba(124,58,237,0.12)]">
+            <h1 className="text-xl font-semibold text-red-300">
+              Could not load downvoted content
+            </h1>
+            <p className="mt-2 text-sm text-red-200">{voteError.message}</p>
+          </div>
         </div>
       </main>
     );
@@ -190,9 +198,14 @@ export default async function Home({ searchParams }: HomeProps) {
   if (!selectedCaptionId) {
     return (
       <main className="min-h-screen bg-[#050816] bg-[radial-gradient(circle_at_top,rgba(124,58,237,0.12),transparent_40%),radial-gradient(circle_at_bottom_right,rgba(34,197,94,0.10),transparent_35%),linear-gradient(180deg,#050816_0%,#0B1020_100%)] px-6 py-10 text-slate-100">
-        <div className="mx-auto max-w-[700px] space-y-2 rounded-[24px] border border-slate-900 bg-[#08122F] p-8 shadow-[0_10px_30px_rgba(0,0,0,0.6),0_0_20px_rgba(34,197,94,0.08),0_0_24px_rgba(124,58,237,0.12)]">
-          <h1 className="text-2xl font-semibold">Re-evaluate Content</h1>
-          <p className="text-sm text-slate-300">You&apos;re done for now.</p>
+        <div className="mx-auto max-w-[700px]">
+          <div className="mb-4 flex justify-end">
+            <UploadModal />
+          </div>
+          <div className="space-y-2 rounded-[24px] border border-slate-900 bg-[#08122F] p-8 shadow-[0_10px_30px_rgba(0,0,0,0.6),0_0_20px_rgba(34,197,94,0.08),0_0_24px_rgba(124,58,237,0.12)]">
+            <h1 className="text-2xl font-semibold">Re-evaluate Content</h1>
+            <p className="text-sm text-slate-300">You&apos;re done for now.</p>
+          </div>
         </div>
       </main>
     );
@@ -209,9 +222,14 @@ export default async function Home({ searchParams }: HomeProps) {
   if (captionError) {
     return (
       <main className="min-h-screen bg-[#050816] bg-[radial-gradient(circle_at_top,rgba(124,58,237,0.12),transparent_40%),radial-gradient(circle_at_bottom_right,rgba(34,197,94,0.10),transparent_35%),linear-gradient(180deg,#050816_0%,#0B1020_100%)] px-6 py-10 text-slate-100">
-        <div className="mx-auto max-w-[700px] rounded-[24px] border border-red-900/60 bg-[#08122F] p-6 shadow-[0_10px_30px_rgba(0,0,0,0.6),0_0_24px_rgba(124,58,237,0.12)]">
-          <h1 className="text-xl font-semibold text-red-300">Could not load caption for vote</h1>
-          <p className="mt-2 text-sm text-red-200">{captionError.message}</p>
+        <div className="mx-auto max-w-[700px]">
+          <div className="mb-4 flex justify-end">
+            <UploadModal />
+          </div>
+          <div className="rounded-[24px] border border-red-900/60 bg-[#08122F] p-6 shadow-[0_10px_30px_rgba(0,0,0,0.6),0_0_24px_rgba(124,58,237,0.12)]">
+            <h1 className="text-xl font-semibold text-red-300">Could not load caption for vote</h1>
+            <p className="mt-2 text-sm text-red-200">{captionError.message}</p>
+          </div>
         </div>
       </main>
     );
@@ -222,6 +240,10 @@ export default async function Home({ searchParams }: HomeProps) {
   return (
     <main className="min-h-screen bg-[#050816] bg-[radial-gradient(circle_at_top,rgba(124,58,237,0.12),transparent_40%),radial-gradient(circle_at_bottom_right,rgba(34,197,94,0.10),transparent_35%),linear-gradient(180deg,#050816_0%,#0B1020_100%)] px-6 py-10 text-slate-100">
       <div className="mx-auto max-w-[700px] space-y-6">
+        <div className="flex justify-end">
+          <UploadModal />
+        </div>
+
         <header className="space-y-2">
           <h1 className="text-center text-3xl font-bold">Re-evaluate Content</h1>
           <p className="text-center text-sm text-[#CBD5E1]">Do you find this image weird?</p>
