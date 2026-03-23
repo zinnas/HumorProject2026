@@ -143,3 +143,36 @@ Verification performed:
 - Verified code path updates existing vote row and never inserts new rows for re-vote.
 Confirmation that existing vote rows are updated, not duplicated:
 - Confirmed by implementation: write path uses only `UPDATE ... WHERE id = vote_id AND profile_id = auth_user_id`; no insert path exists.
+
+## Entry
+Timestamp: 2026-03-22 22:14:02 -04:00  
+Type: change  
+Task: Apply Supabase setup updates (dependency check, env vars, helper clients, middleware session refresh integration)  
+Files changed:
+- `.env.local`
+- `src/utils/supabase/server.ts`
+- `src/utils/supabase/client.ts`
+- `src/utils/supabase/middleware.ts`
+- `middleware.ts`
+- `AI_CHANGELOG.md`
+Summary:
+- Ran `npm install @supabase/supabase-js` (already up to date).
+- Added `.env.local` with `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY`.
+- Updated Supabase server/browser helpers to read `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` with fallback to `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+- Added `src/utils/supabase/middleware.ts` with cookie-refresh/session-update helper.
+- Updated root middleware to use the helper while preserving existing protected-route redirect behavior.
+Auth changes (explicit + safety):
+- Changed: middleware session refresh logic is now centralized in `src/utils/supabase/middleware.ts`.
+- Preserved: protected-route enforcement still requires `supabase.auth.getUser()` and redirects unauthenticated users to `/login`.
+- Preserved: no callback/auth route changes, no client-trusted user IDs, no service-role usage.
+RLS impact:
+- None. No policy or role changes.
+Risk assessment:
+- Low to moderate. Auth-sensitive files changed, but behavior-preserving fallback and redirect checks were retained.
+Rollback plan:
+- Revert `middleware.ts` and `src/utils/supabase/middleware.ts` to prior direct middleware client usage.
+- Revert `src/utils/supabase/server.ts` and `src/utils/supabase/client.ts` env-key fallback changes.
+- Remove `.env.local` additions if needed.
+Verification performed:
+- Ran `npm test` (`npm run lint`) successfully with no errors (one existing `<img>` warning in `src/app/page.tsx`).
+- Confirmed auth redirect logic remains present in `middleware.ts`.
