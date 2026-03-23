@@ -283,3 +283,33 @@ Root cause classification:
 Current fix relevance:
 - Current code updates by `(profile_id, caption_id)` instead of bigint `id`, avoiding this precision-risk path.
 - Rendering fix (remove `image_description`) remains valid and unchanged.
+
+## Entry
+Timestamp: 2026-03-22 23:03:34 -04:00  
+Type: fix  
+Task: Advance to next item immediately after successful vote submission  
+Files changed:
+- `src/app/page.tsx`
+- `AI_CHANGELOG.md`
+Brief debug/root cause:
+- Page always selected the first eligible caption from the global queue.
+- After voting, server action returned to the same page selection logic without excluding the current item, so the same item re-rendered.
+Fix applied (minimal):
+- Added server-side redirect from vote action to `/?exclude_caption_id=<current_caption_id>` after successful skip/update/insert paths.
+- Added page-level `searchParams` handling and excluded `exclude_caption_id` from the next eligible queue selection for that request.
+- Kept global selection rule unchanged: DISTINCT `caption_id` from `caption_votes` where `vote_value = -1`.
+- Added friendly exhausted state: `You&apos;re done for now.`
+Write behavior:
+- Unchanged core semantics:
+  - authenticated user (`auth.uid()`) as `profile_id`
+  - key `(profile_id, caption_id)`
+  - unchanged vote => skip write
+  - existing vote => update
+  - missing vote => insert
+Auth impact:
+- No auth flow changes.
+- Middleware and callback unchanged.
+RLS impact:
+- None. No policy changes.
+Verification performed:
+- Ran `npm test` (`npm run lint`) with 0 errors (existing `<img>` warning only).

@@ -35,8 +35,17 @@ function renderImage(url: string | null, alt: string): ReactElement {
   return <img src={url} alt={alt} className="h-48 w-full rounded-md object-cover" />;
 }
 
-export default async function Home() {
+type SearchParams = {
+  exclude_caption_id?: string;
+};
+
+type HomeProps = {
+  searchParams?: Promise<SearchParams> | SearchParams;
+};
+
+export default async function Home({ searchParams }: HomeProps) {
   const supabase = await createClient();
+  const resolvedSearchParams = searchParams ? await searchParams : {};
 
   const {
     data: { user },
@@ -88,7 +97,7 @@ export default async function Home() {
     const existingVote = existingVotes?.[0] ?? null;
 
     if (existingVote?.vote_value === nextVote) {
-      return;
+      redirect(`/?exclude_caption_id=${encodeURIComponent(captionId)}`);
     }
 
     if (existingVote) {
@@ -104,7 +113,7 @@ export default async function Home() {
         throw new Error(updateError.message);
       }
 
-      return;
+      redirect(`/?exclude_caption_id=${encodeURIComponent(captionId)}`);
     }
 
     const { error: insertError } = await actionSupabase
@@ -119,6 +128,8 @@ export default async function Home() {
     if (insertError) {
       throw new Error(insertError.message);
     }
+
+    redirect(`/?exclude_caption_id=${encodeURIComponent(captionId)}`);
   }
 
   const { data: downvotedVotes, error: voteError } = await supabase
@@ -143,14 +154,19 @@ export default async function Home() {
     new Set((downvotedVotes ?? []).map((vote) => vote.caption_id)),
   );
 
-  const selectedCaptionId = distinctCaptionIds[0];
+  const excludedCaptionId = resolvedSearchParams.exclude_caption_id?.trim();
+  const eligibleCaptionIds = excludedCaptionId
+    ? distinctCaptionIds.filter((captionId) => captionId !== excludedCaptionId)
+    : distinctCaptionIds;
+
+  const selectedCaptionId = eligibleCaptionIds[0];
 
   if (!selectedCaptionId) {
     return (
       <main className="min-h-screen bg-zinc-50 px-6 py-10 text-zinc-900">
         <div className="mx-auto max-w-2xl space-y-2 rounded-xl border border-zinc-200 bg-white p-8 shadow-sm">
           <h1 className="text-2xl font-semibold">Re-evaluate Content</h1>
-          <p className="text-sm text-zinc-600">No globally downvoted items were found.</p>
+          <p className="text-sm text-zinc-600">You&apos;re done for now.</p>
         </div>
       </main>
     );
