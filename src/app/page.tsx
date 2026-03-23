@@ -23,10 +23,12 @@ type CaptionRow = {
 };
 
 type DownvotedVoteRow = {
+  caption_id: string;
+};
+
+type ExistingVoteRow = {
   id: number;
   vote_value: number;
-  caption_id: string;
-  profile_id: string;
 };
 
 function renderImage(url: string | null, alt: string): ReactElement {
@@ -39,26 +41,6 @@ function renderImage(url: string | null, alt: string): ReactElement {
   }
 
   return <img src={url} alt={alt} className="h-48 w-full rounded-md object-cover" />;
-}
-
-async function hasCaptionVotesColumn(
-  columnName: "modified_by_user_id",
-): Promise<boolean> {
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from("caption_votes")
-    .select(columnName)
-    .limit(1);
-
-  if (!error) {
-    return true;
-  }
-
-  if (error.code === "42703" || /does not exist/i.test(error.message)) {
-    return false;
-  }
-
-  throw new Error(error.message);
 }
 
 export default async function Home() {
@@ -84,68 +66,72 @@ export default async function Home() {
       redirect("/login");
     }
 
-    const voteIdRaw = formData.get("vote_id");
+    const captionIdRaw = formData.get("caption_id");
     const nextVoteRaw = formData.get("vote_value");
 
-    if (typeof voteIdRaw !== "string" || typeof nextVoteRaw !== "string") {
+    if (typeof captionIdRaw !== "string" || typeof nextVoteRaw !== "string") {
       throw new Error("Missing vote payload.");
     }
 
-    const voteId = Number(voteIdRaw);
+    const captionId = captionIdRaw.trim();
     const nextVote = Number(nextVoteRaw);
 
-    if (!Number.isInteger(voteId) || (nextVote !== 1 && nextVote !== -1)) {
+    if (!captionId || (nextVote !== 1 && nextVote !== -1)) {
       throw new Error("Invalid vote payload.");
     }
 
     const { data: existingVote, error: existingVoteError } = await actionSupabase
       .from("caption_votes")
       .select("id,vote_value")
-      .eq("id", voteId)
+      .eq("caption_id", captionId)
       .eq("profile_id", actionUser.id)
-      .single<Pick<DownvotedVoteRow, "id" | "vote_value">>();
+      .maybeSingle<ExistingVoteRow>();
 
     if (existingVoteError) {
       throw new Error(existingVoteError.message);
     }
 
-    if (existingVote.vote_value === nextVote) {
+    if (existingVote?.vote_value === nextVote) {
       return;
     }
 
-    const updatePayload: {
-      vote_value: number;
-      modified_datetime_utc: string;
-      modified_by_user_id?: string;
-    } = {
-      vote_value: nextVote,
-      modified_datetime_utc: new Date().toISOString(),
-    };
+    if (existingVote) {
+      const { error: updateError } = await actionSupabase
+        .from("caption_votes")
+        .update({
+          vote_value: nextVote,
+        })
+        .eq("id", existingVote.id)
+        .eq("profile_id", actionUser.id)
+        .eq("caption_id", captionId);
 
-    if (await hasCaptionVotesColumn("modified_by_user_id")) {
-      updatePayload.modified_by_user_id = actionUser.id;
+      if (updateError) {
+        throw new Error(updateError.message);
+      }
+
+      return;
     }
 
-    const { error: updateError } = await actionSupabase
+    const { error: insertError } = await actionSupabase
       .from("caption_votes")
-      .update(updatePayload)
-      .eq("id", voteId)
-      .eq("profile_id", actionUser.id);
+      .insert({
+        caption_id: captionId,
+        profile_id: actionUser.id,
+        vote_value: nextVote,
+        created_datetime_utc: new Date().toISOString(),
+      });
 
-    if (updateError) {
-      throw new Error(updateError.message);
+    if (insertError) {
+      throw new Error(insertError.message);
     }
   }
 
-  const { data: downvotedVote, error: voteError } = await supabase
+  const { data: downvotedVotes, error: voteError } = await supabase
     .from("caption_votes")
-    .select("id,vote_value,caption_id,profile_id")
+    .select("caption_id")
     .eq("vote_value", -1)
-    .eq("profile_id", user.id)
-    .order("modified_datetime_utc", { ascending: false, nullsFirst: false })
-    .order("created_datetime_utc", { ascending: false })
-    .limit(1)
-    .maybeSingle<DownvotedVoteRow>();
+    .order("caption_id", { ascending: true })
+    .returns<DownvotedVoteRow[]>();
 
   if (voteError) {
     return (
@@ -158,12 +144,18 @@ export default async function Home() {
     );
   }
 
-  if (!downvotedVote) {
+  const distinctCaptionIds = Array.from(
+    new Set((downvotedVotes ?? []).map((vote) => vote.caption_id)),
+  );
+
+  const selectedCaptionId = distinctCaptionIds[0];
+
+  if (!selectedCaptionId) {
     return (
       <main className="min-h-screen bg-zinc-50 px-6 py-10 text-zinc-900">
         <div className="mx-auto max-w-2xl space-y-2 rounded-xl border border-zinc-200 bg-white p-8 shadow-sm">
           <h1 className="text-2xl font-semibold">Re-evaluate Content</h1>
-          <p className="text-sm text-zinc-600">No previously downvoted items were found for your account.</p>
+          <p className="text-sm text-zinc-600">No globally downvoted items were found.</p>
         </div>
       </main>
     );
@@ -174,7 +166,7 @@ export default async function Home() {
     .select(
       "id,content,image_id,images(id,created_datetime_utc,modified_datetime_utc,url,is_common_use,profile_id,additional_context,is_public,image_description,celebrity_recognition)",
     )
-    .eq("id", downvotedVote.caption_id)
+    .eq("id", selectedCaptionId)
     .single<CaptionRow>();
 
   if (captionError) {
@@ -209,7 +201,7 @@ export default async function Home() {
             </div>
 
             <form action={handleVote} className="mt-6 flex gap-3">
-              <input type="hidden" name="vote_id" value={String(downvotedVote.id)} />
+              <input type="hidden" name="caption_id" value={caption.id} />
               <button
                 type="submit"
                 name="vote_value"

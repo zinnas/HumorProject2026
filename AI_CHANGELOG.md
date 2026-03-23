@@ -176,3 +176,46 @@ Rollback plan:
 Verification performed:
 - Ran `npm test` (`npm run lint`) successfully with no errors (one existing `<img>` warning in `src/app/page.tsx`).
 - Confirmed auth redirect logic remains present in `middleware.ts`.
+
+## Entry
+Timestamp: 2026-03-22 22:28:45 -04:00  
+Type: change  
+Task: Align re-evaluation feature with global downvote queue and `(profile_id, caption_id)` write semantics  
+Files changed:
+- `src/app/page.tsx`
+- `AI_CHANGELOG.md`
+Schema inspected:
+- `schema.sql` (repo root; `supabase/schema.sql` not present in repository)
+- Relationships used:
+  - `caption_votes.caption_id -> captions.id`
+  - `captions.image_id -> images.id`
+Selection logic (separate from write logic):
+- Selection source is global `public.caption_votes` rows where `vote_value = -1`.
+- Queue key is DISTINCT `caption_id` (deduped in app from selected rows).
+- Selection is NOT filtered by current authenticated user.
+- One caption/image pair is rendered at a time from exact DB-linked rows.
+Write logic:
+- Writer identity is current `auth.uid()` and is used as `profile_id`.
+- Uniqueness key is `(profile_id, caption_id)` at app level.
+- On vote:
+  - if existing row for `(profile_id, caption_id)` exists and value changed: `UPDATE`
+  - if existing row exists and value unchanged: skip write
+  - if no existing row: `INSERT`
+- Avoided manual writes to trigger-managed audit fields (`created_by_user_id`, `modified_by_user_id`, `modified_datetime_utc`).
+Auth impact (confirm unchanged):
+- Auth flow unchanged.
+- Server-side `supabase.auth.getUser()` checks and redirects remain intact.
+- No middleware/callback/client-server auth weakening introduced by this change.
+RLS impact:
+- None. No policy changes.
+Risk assessment:
+- Low to moderate. Main risk is dependence on expected unique behavior for `(profile_id, caption_id)` in live DB.
+Rollback plan:
+- Revert `src/app/page.tsx` to prior implementation.
+- No schema or policy rollback needed.
+Verification performed:
+- Ran `npm test` (`npm run lint`) with 0 errors (existing `<img>` warning only).
+- Confirmed write path updates existing rows or inserts only when absent, and skips unchanged votes.
+Confirmation that existing rows are updated and not duplicated:
+- Implemented explicit existing-row check by `(profile_id, caption_id)` before write.
+- Existing matching row uses `UPDATE`, not `INSERT`.
