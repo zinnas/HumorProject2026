@@ -1,0 +1,101 @@
+Step #6 "Upload" UI Improvement
+Refine the existing upload modal UX in the current Next.js App Router app.
+
+Context:
+- The upload flow already works end-to-end
+- Keep the existing secure server routes and pipeline logic intact
+- This task is UI/UX cleanup, copy changes, and interaction changes
+- Do not expose technical API details, raw JSON, IDs, timestamps, or debugging output to end users
+
+Goals:
+Make the upload experience feel polished, simple, and consumer-friendly.
+
+Required changes:
+
+1. Update modal copy
+- Keep the title: "Upload Image"
+- Replace the subtitle below it with:
+  "Select an image to upload and create your own Humor Content."
+
+2. Update the file label
+- Change "Image File" to:
+  "Image File (JPG, JPEG, PNG, WEBP, GIF, HEIC)"
+
+3. Change the upload flow behavior
+- After the user selects an image, show:
+  - "Submit" button
+  - "Discard" button
+- Do not automatically upload to the database after file selection
+- If the user clicks "Discard":
+  - clear the selected file
+  - clear preview
+  - clear errors/success/caption state
+  - keep the modal open
+  - do not upload anything
+- If the user clicks "Submit":
+  - run the existing pipeline flow
+  - upload image
+  - register image
+  - generate captions
+
+4. Simplify what the user sees after success
+- Do not show raw JSON
+- Do not show internal fields like:
+  - id
+  - profile_id
+  - created_datetime_utc
+  - modified_datetime_utc
+  - or any other backend metadata
+- Only show the generated captions in a clean user-facing format
+- Present captions as attractive caption cards or a clean list
+- Each caption should be easy to read and visually separated
+- If multiple captions exist, show them in a modern scrollable area
+
+5. Improve the captions/results container design
+- Replace the current old-looking scroll box with a modern styled results panel
+- Use the app’s existing dark neon aesthetic
+- Rounded corners, subtle border, soft shadow, clean spacing
+- Make scrolling feel modern and visually integrated
+- Avoid the “raw code block” look
+- Do not render results in monospace unless necessary
+
+6. Buttons and interactions
+- Keep a clear Close button for the modal
+- Before submission:
+  - show Submit and Discard
+- During submission:
+  - disable buttons appropriately
+  - show a loading state such as "Uploading..." or "Generating captions..."
+- After success:
+  - keep Close visible
+  - Discard should no longer be the primary action
+- Ensure the button layout feels balanced and polished
+
+7. State cleanup
+- Discard resets:
+  - selected file
+  - preview URL
+  - status text
+  - errors
+  - generated captions
+- Close should also reset modal state when appropriate so reopening starts clean
+
+8. Keep implementation constraints
+- Do not break existing auth flow
+- Do not change the secure server-side API architecture
+- Do not use service-role keys
+- Do not show developer/debug info in the UI
+- Keep TypeScript-compatible code
+- Reuse the existing modal/component structure if already present
+
+Design guidance:
+- Keep the current premium dark style
+- Make the modal feel cleaner and less developer-facing
+- Prioritize clarity and simplicity for non-technical users
+- The results area should feel like polished product UI, not a terminal or inspector
+
+Deliverables:
+- Update the existing upload modal/component
+- Preserve working functionality
+- Return only the user-friendly captions UI after submission
+Do not auto-submit on file selection; selection and submission must be separate actions.

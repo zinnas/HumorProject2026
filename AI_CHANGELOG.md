@@ -561,3 +561,31 @@ Rollback plan:
   - `src/app/api/caption-pipeline/presigned-url/route.ts`
 Verification performed:
 - Ran `npm test` (`npm run lint`) with 0 errors (existing `<img>` warning only).
+
+## Entry
+Timestamp: 2026-03-23 17:03:19 -04:00  
+Type: UI/UX change  
+Task: Execute Step6.txt upload modal refinement  
+Files changed:
+- `src/app/upload-modal.tsx`
+- `AI_CHANGELOG.md`
+Summary:
+- Updated modal subtitle to: `Select an image to upload and create your own Humor Content.`
+- Updated file label to: `Image File (JPG, JPEG, PNG, WEBP, GIF, HEIC)`.
+- Kept selection and submission as separate actions (no auto-submit on file pick).
+- Added explicit `Discard` behavior before submission:
+  - clears selected file
+  - clears preview
+  - clears status/error/success state
+  - clears generated captions
+  - keeps modal open
+- Improved submission states with step-oriented loading text (`Preparing upload...`, `Uploading image...`, `Registering image...`, `Generating captions...`) and button disable handling.
+- Removed developer-facing raw JSON output and debug display from UI.
+- Added user-facing caption results panel with clean card list presentation in a modern scrollable container matching dark neon styling.
+- Kept close behavior clean: closing the modal resets state so reopening starts fresh.
+Auth impact:
+- None. No auth logic changes.
+RLS impact:
+- None. No database policy/query changes.
+Verification performed:
+- Ran `npm test` (`npm run lint`) with 0 errors (existing `<img>` warning only).

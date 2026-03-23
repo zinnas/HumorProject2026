@@ -39,14 +39,75 @@ function parseErrorMessage(defaultMessage: string, payload: unknown): string {
   return defaultMessage;
 }
 
+function extractCaptionStrings(payload: unknown): string[] {
+  const captions = new Set<string>();
+
+  function addValue(value: unknown) {
+    if (typeof value !== "string") {
+      return;
+    }
+
+    const cleaned = value.trim();
+    if (!cleaned) {
+      return;
+    }
+
+    captions.add(cleaned);
+  }
+
+  function walk(node: unknown) {
+    if (!node) {
+      return;
+    }
+
+    if (typeof node === "string") {
+      addValue(node);
+      return;
+    }
+
+    if (Array.isArray(node)) {
+      node.forEach(walk);
+      return;
+    }
+
+    if (typeof node !== "object") {
+      return;
+    }
+
+    const record = node as Record<string, unknown>;
+    addValue(record.caption);
+    addValue(record.content);
+    addValue(record.text);
+
+    if (record.captions) {
+      walk(record.captions);
+    }
+    if (record.results) {
+      walk(record.results);
+    }
+    if (record.items) {
+      walk(record.items);
+    }
+    if (record.data) {
+      walk(record.data);
+    }
+  }
+
+  walk(payload);
+
+  return Array.from(captions);
+}
+
 export default function UploadModal() {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [statusText, setStatusText] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [generatedCaptions, setGeneratedCaptions] = useState<unknown>(null);
+  const [generatedCaptions, setGeneratedCaptions] = useState<string[]>([]);
+  const [fileInputResetKey, setFileInputResetKey] = useState(0);
 
   const selectedTypeLabel = useMemo(() => selectedFile?.type ?? "unknown", [selectedFile]);
 
@@ -64,25 +125,44 @@ export default function UploadModal() {
     };
   }, [selectedFile]);
 
+  function resetModalState() {
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    setError(null);
+    setSuccess(null);
+    setStatusText(null);
+    setGeneratedCaptions([]);
+    setFileInputResetKey((current) => current + 1);
+  }
+
   function closeModal() {
     if (isSubmitting) {
       return;
     }
+
+    resetModalState();
     setIsOpen(false);
-    setError(null);
-    setSuccess(null);
   }
 
   function openModal() {
+    resetModalState();
     setIsOpen(true);
-    setError(null);
-    setSuccess(null);
+  }
+
+  function discardSelection() {
+    if (isSubmitting) {
+      return;
+    }
+
+    resetModalState();
   }
 
   function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
     const nextFile = event.target.files?.[0] ?? null;
     setError(null);
     setSuccess(null);
+    setStatusText(null);
+    setGeneratedCaptions([]);
 
     if (!nextFile) {
       setSelectedFile(null);
@@ -91,7 +171,7 @@ export default function UploadModal() {
 
     if (!ACCEPTED_MIME_TYPES.has(nextFile.type)) {
       setSelectedFile(null);
-      setError(`Unsupported file type: ${nextFile.type || "unknown"}`);
+      setError("Please choose a JPG, JPEG, PNG, WEBP, GIF, or HEIC image.");
       return;
     }
 
@@ -118,8 +198,10 @@ export default function UploadModal() {
     }
 
     setIsSubmitting(true);
+    setStatusText("Preparing upload...");
     setError(null);
     setSuccess(null);
+    setGeneratedCaptions([]);
 
     try {
       const presignedRes = await fetch("/api/caption-pipeline/presigned-url", {
@@ -135,7 +217,7 @@ export default function UploadModal() {
       const presignedPayload = (await parseResponseBody(presignedRes)) as PresignedUrlResponse | null;
 
       if (!presignedRes.ok) {
-        setError(parseErrorMessage("Could not create upload URL.", presignedPayload));
+        setError(parseErrorMessage("Could not start the upload.", presignedPayload));
         return;
       }
 
@@ -143,10 +225,11 @@ export default function UploadModal() {
       const cdnUrl = presignedPayload?.cdnUrl;
 
       if (!presignedUrl || !cdnUrl) {
-        setError("Upload URL response is missing required fields.");
+        setError("Upload setup is incomplete. Please try again.");
         return;
       }
 
+      setStatusText("Uploading image...");
       const uploadRes = await fetch(presignedUrl, {
         method: "PUT",
         headers: {
@@ -156,11 +239,11 @@ export default function UploadModal() {
       });
 
       if (!uploadRes.ok) {
-        const uploadErrorText = await uploadRes.text();
-        setError(uploadErrorText || "Could not upload the image bytes.");
+        setError("Could not upload this image. Please try another file.");
         return;
       }
 
+      setStatusText("Registering image...");
       const registerRes = await fetch("/api/caption-pipeline/register-image", {
         method: "POST",
         headers: {
@@ -175,7 +258,7 @@ export default function UploadModal() {
       const registerPayload = (await parseResponseBody(registerRes)) as RegisterImageResponse | null;
 
       if (!registerRes.ok) {
-        setError(parseErrorMessage("Could not register uploaded image.", registerPayload));
+        setError(parseErrorMessage("Could not process this upload.", registerPayload));
         return;
       }
 
@@ -186,10 +269,11 @@ export default function UploadModal() {
         registerPayload?.data?.id;
 
       if (!imageId) {
-        setError("Image registration response did not include imageId.");
+        setError("Could not process this upload. Please try again.");
         return;
       }
 
+      setStatusText("Generating captions...");
       const captionsRes = await fetch("/api/caption-pipeline/generate-captions", {
         method: "POST",
         headers: {
@@ -207,14 +291,22 @@ export default function UploadModal() {
         return;
       }
 
-      setGeneratedCaptions(captionsPayload);
-      console.log("Generated captions payload:", captionsPayload);
-      setSuccess("Upload complete and captions generated.");
+      const captions = extractCaptionStrings(captionsPayload);
+
+      if (captions.length === 0) {
+        setError("No captions were generated. Please try another image.");
+        return;
+      }
+
+      setGeneratedCaptions(captions);
+      setSuccess("Your captions are ready.");
+      setStatusText(null);
     } catch (submitError) {
       console.error("upload modal submit error:", submitError);
-      setError("Unexpected error while processing upload.");
+      setError("Something went wrong while generating captions. Please try again.");
     } finally {
       setIsSubmitting(false);
+      setStatusText(null);
     }
   }
 
@@ -240,13 +332,14 @@ export default function UploadModal() {
           <div className="w-full max-w-xl rounded-[24px] border border-slate-900 bg-[#08122F] p-6 shadow-[0_10px_30px_rgba(0,0,0,0.6),0_0_20px_rgba(34,197,94,0.08),0_0_24px_rgba(124,58,237,0.12)]">
             <h2 className="text-xl font-semibold text-[#F8FAFC]">Upload Image</h2>
             <p className="mt-1 text-sm text-[#CBD5E1]">
-              Select an image and run the caption pipeline.
+              Select an image to upload and create your own Humor Content.
             </p>
 
             <label className="mt-4 block text-sm text-[#CBD5E1]" htmlFor="caption-upload-file">
-              Image file
+              Image File (JPG, JPEG, PNG, WEBP, GIF, HEIC)
             </label>
             <input
+              key={fileInputResetKey}
               id="caption-upload-file"
               type="file"
               accept={ACCEPT_ATTR}
@@ -285,29 +378,56 @@ export default function UploadModal() {
               </p>
             ) : null}
 
-            {generatedCaptions ? (
-              <pre className="mt-4 max-h-40 overflow-auto rounded-md border border-slate-800 bg-[#020617] p-3 text-xs text-slate-300">
-                {JSON.stringify(generatedCaptions, null, 2)}
-              </pre>
+            {generatedCaptions.length > 0 ? (
+              <section className="mt-4 rounded-2xl border border-slate-800/80 bg-[linear-gradient(180deg,rgba(2,6,23,0.9),rgba(2,6,23,0.65))] p-3 shadow-[inset_0_1px_0_rgba(148,163,184,0.08)]">
+                <h3 className="px-1 text-sm font-semibold text-slate-100">Generated Captions</h3>
+                <div className="mt-2 max-h-52 space-y-2 overflow-y-auto pr-1">
+                  {generatedCaptions.map((captionText, index) => (
+                    <article
+                      key={`${captionText}-${index}`}
+                      className="rounded-xl border border-slate-700/60 bg-[#0A1226] px-3 py-2 text-sm text-slate-200 shadow-[0_6px_18px_rgba(2,6,23,0.4)]"
+                    >
+                      {captionText}
+                    </article>
+                  ))}
+                </div>
+              </section>
             ) : null}
 
-            <div className="mt-5 flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={closeModal}
-                disabled={isSubmitting}
-                className="rounded-full border border-[#1e293b] bg-[#020617] px-4 py-2 text-sm font-medium text-[#e5e7eb] disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                Close
-              </button>
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={isSubmitting || !selectedFile}
-                className="rounded-full bg-[#fbbf24] px-5 py-2 text-sm font-bold text-black disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isSubmitting ? "Submitting..." : "Submit"}
-              </button>
+            <div className="mt-5 flex items-center justify-between gap-3">
+              <p className="min-h-[20px] text-xs text-slate-400">{isSubmitting ? statusText : ""}</p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  disabled={isSubmitting}
+                  className="rounded-full border border-[#1e293b] bg-[#020617] px-4 py-2 text-sm font-medium text-[#e5e7eb] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  Close
+                </button>
+
+                {selectedFile && !success ? (
+                  <button
+                    type="button"
+                    onClick={discardSelection}
+                    disabled={isSubmitting}
+                    className="rounded-full border border-slate-700 bg-[#0B1328] px-4 py-2 text-sm font-medium text-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Discard
+                  </button>
+                ) : null}
+
+                {selectedFile && !success ? (
+                  <button
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={isSubmitting}
+                    className="rounded-full bg-[#fbbf24] px-5 py-2 text-sm font-bold text-black disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isSubmitting ? statusText ?? "Uploading..." : "Submit"}
+                  </button>
+                ) : null}
+              </div>
             </div>
           </div>
         </div>
