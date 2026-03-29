@@ -619,3 +619,35 @@ Rollback plan:
 Verification performed:
 - Ran `npm test` (`npm run lint`) successfully with 0 errors.
 - Remaining warning is pre-existing/non-blocking: `@next/next/no-img-element` in `src/app/page.tsx`.
+## Entry
+Timestamp: 2026-03-29 14:22:06 -04:00  
+Type: Bug fix (audio lifecycle)  
+Task: Keep ambient audio persistent across vote/content transitions  
+Files changed:
+- src/app/layout.tsx
+- src/app/page.tsx
+- src/app/intro-audio-shell.tsx
+- AI_CHANGELOG.md
+Summary:
+- Fixed root cause of audio restart/pause by moving IntroAudioShell mount from src/app/page.tsx to persistent src/app/layout.tsx.
+- Removed vote-click-driven audio startup logic so playback is no longer coupled to vote interactions.
+- Kept audio object initialized once per app shell mount, preserving currentTime across content transitions and page re-renders within the app route.
+- Updated Continue behavior to start playback from currentTime = 0 and then continue uninterrupted with loop = true.
+- Kept isMuted and hasSeenIntro localStorage persistence intact.
+- Scoped intro/mute UI to the home route while keeping the audio owner at stable top level.
+Auth impact:
+- None. No auth logic changes.
+RLS impact:
+- None. No database policy/query changes.
+Risk assessment:
+- Low. Client-side lifecycle placement change only; no server action/query/auth changes.
+Rollback plan:
+- Revert:
+  - src/app/layout.tsx
+  - src/app/page.tsx
+  - src/app/intro-audio-shell.tsx
+Verification performed:
+- Ran 
+pm test (
+pm run lint) successfully with 0 errors.
+- Existing non-blocking warning remains for <img> usage in src/app/page.tsx.

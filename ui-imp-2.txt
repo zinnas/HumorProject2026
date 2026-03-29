@@ -1,0 +1,54 @@
+
+The intro + audio feature is close, but audio behavior is still incorrect. Fix only the audio lifecycle behavior with minimal changes.
+
+## Current bugs
+1. Audio starts only when I click "Yes" or "No"
+2. Audio pauses when I evaluate content
+3. Audio restarts from the beginning when I continue evaluating content
+
+## Correct behavior
+- Audio must start as soon as the user closes the intro modal by clicking "Continue"
+- Audio must keep playing continuously while the user uses the app
+- Voting / changing content must NOT pause or restart the audio
+- If the audio reaches the end, it should restart automatically
+- If the user mutes it, audio should stay muted until unmuted
+- If the user does not mute it, audio should continue uninterrupted
+
+## Important implementation requirement
+The audio player must live at a stable top-level client component that does NOT unmount or reinitialize when:
+- the user votes
+- the content card changes
+- the page re-renders for the next item
+
+Most likely root cause:
+- the audio element or Audio object is created inside a component that re-renders/re-mounts during content progression
+- or play() is tied to vote actions instead of the intro modal close action
+
+## Fix requirements
+- Initialize the audio once in a persistent top-level client component
+- Start playback from the beginning when the user clicks "Continue" on the intro modal
+- After that, preserve currentTime across content transitions
+- Do NOT recreate the audio object on every vote or content update
+- Use loop = true so the track restarts automatically at the end
+- Keep mute state persistent in localStorage
+- Keep intro-seen state persistent in localStorage
+
+## Desired behavior summary
+1. User opens app
+2. Intro modal appears
+3. User clicks "Continue"
+4. Audio starts from time 0
+5. User evaluates multiple items
+6. Audio keeps playing continuously without restarting
+7. If muted, it stays muted
+8. If not muted, it keeps playing and loops at the end
+
+## Technical constraints
+- Do not change auth, middleware, queue logic, or vote logic
+- Do not change the modal copy
+- Keep the existing mute button UI unless necessary
+- Minimal, production-ready fix
+- React + TypeScript
+
+## Debug requirement
+Before changing code, briefly identify exactly which component lifecycle or state change is causing the audio to restart/pause.

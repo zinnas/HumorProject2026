@@ -1,13 +1,13 @@
 "use client";
 
 import {
-  type MouseEvent,
   type PropsWithChildren,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
+import { usePathname } from "next/navigation";
 
 const INTRO_STORAGE_KEY = "hasSeenIntro";
 const MUTE_STORAGE_KEY = "isMuted";
@@ -16,6 +16,7 @@ const INTRO_TEXT =
   "This application identifies downvoted content where the associated image is labeled as is_common_use = TRUE. Its purpose is to surface disliked content and prompt users to re-evaluate it. Specifically, we aim to determine whether an image’s perceived “weirdness” contributes to the content being disliked.";
 
 export default function IntroAudioShell({ children }: PropsWithChildren) {
+  const pathname = usePathname();
   const [hasSeenIntro, setHasSeenIntro] = useState<boolean | null>(() => {
     if (typeof window === "undefined") {
       return null;
@@ -29,9 +30,10 @@ export default function IntroAudioShell({ children }: PropsWithChildren) {
     return window.localStorage.getItem(MUTE_STORAGE_KEY) === "true";
   });
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const hasTriedAutoStartRef = useRef(false);
+  const hasStartedRef = useRef(false);
+  const isHomeRoute = pathname === "/";
 
-  const shouldShowIntro = useMemo(() => hasSeenIntro === false, [hasSeenIntro]);
+  const shouldShowIntro = useMemo(() => isHomeRoute && hasSeenIntro === false, [hasSeenIntro, isHomeRoute]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -57,17 +59,24 @@ export default function IntroAudioShell({ children }: PropsWithChildren) {
     audioRef.current.muted = isMuted;
   }, [isMuted]);
 
-  const startAudio = async (): Promise<void> => {
-    if (!audioRef.current || hasTriedAutoStartRef.current) {
+  const startAudio = async (fromBeginning = false): Promise<void> => {
+    if (!audioRef.current) {
       return;
     }
 
-    hasTriedAutoStartRef.current = true;
+    if (!fromBeginning && hasStartedRef.current) {
+      return;
+    }
+
+    if (fromBeginning) {
+      audioRef.current.currentTime = 0;
+    }
+
     try {
       await audioRef.current.play();
+      hasStartedRef.current = true;
     } catch {
-      // Ignore browser autoplay failures; the next interaction can trigger play again.
-      hasTriedAutoStartRef.current = false;
+      // Ignore browser autoplay failures.
     }
   };
 
@@ -76,7 +85,7 @@ export default function IntroAudioShell({ children }: PropsWithChildren) {
       window.localStorage.setItem(INTRO_STORAGE_KEY, "true");
     }
     setHasSeenIntro(true);
-    await startAudio();
+    await startAudio(true);
   };
 
   const onToggleMute = (): void => {
@@ -87,20 +96,11 @@ export default function IntroAudioShell({ children }: PropsWithChildren) {
     }
   };
 
-  const onAppClickCapture = async (event: MouseEvent<HTMLDivElement>): Promise<void> => {
-    const target = event.target as HTMLElement | null;
-    const voteButton = target?.closest('button[name="vote_value"]');
-
-    if (voteButton) {
-      await startAudio();
-    }
-  };
-
   return (
-    <div onClickCapture={onAppClickCapture}>
+    <div>
       {children}
 
-      {hasSeenIntro !== null && (
+      {hasSeenIntro !== null && isHomeRoute && (
         <button
           type="button"
           onClick={onToggleMute}
