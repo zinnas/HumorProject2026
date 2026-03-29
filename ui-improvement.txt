@@ -1,0 +1,98 @@
+Add an introductory onboarding experience and background audio feature to this Next.js + Supabase app.
+
+IMPORTANT:
+- Do NOT modify existing auth, middleware, voting logic, RLS, or data fetching.
+- This is purely UI + client behavior.
+
+---
+
+## 1. Intro / Onboarding Page (First Visit Only)
+
+### Behavior
+- When the user first visits the app, show a full-screen modal or page overlay.
+- This should appear ONLY once per user (persist using localStorage).
+
+### Content (exact text)
+"This application identifies downvoted content where the associated image is labeled as is_common_use = TRUE. Its purpose is to surface disliked content and prompt users to re-evaluate it. Specifically, we aim to determine whether an image’s perceived “weirdness” contributes to the content being disliked."
+
+### UI Requirements
+- Centered modal/card
+- Clean dark UI matching existing app theme
+- Slight backdrop blur or dimmed background
+- Include:
+  - Title (e.g., "Welcome")
+  - The text above
+  - A primary button: "Continue"
+
+### Interaction
+- Clicking "Continue":
+  - closes the modal
+  - stores a flag in localStorage (e.g., `hasSeenIntro = true`)
+  - reveals the main app
+
+- User should NOT see this again unless localStorage is cleared
+
+---
+
+## 2. Background Audio (make-it-weirder.mp3)
+
+### Behavior
+- Play `make-it-weirder.mp3` on loop
+- Audio should start AFTER user interaction (to comply with browser autoplay policies)
+
+### Implementation Rules
+- Do NOT autoplay on page load without interaction
+- Start audio when:
+  - user clicks "Continue" on intro modal OR
+  - first vote interaction
+
+### Audio Settings
+- loop: true
+- volume: low by default (~0.3)
+
+---
+
+## 3. Mute Button
+
+### UI Placement
+- Fixed position: bottom-right corner
+- Small circular button
+
+### Style
+- Match app theme (dark + subtle glow)
+- Icon:
+  - 🔊 when playing
+  - 🔇 when muted
+
+### Behavior
+- Toggle mute/unmute
+- Persist user preference in localStorage (e.g., `isMuted`)
+
+---
+
+## 4. Technical Constraints
+
+- Use React + TypeScript
+- Keep implementation minimal and clean
+- Use client-side state (no server changes)
+- Do NOT introduce heavy dependencies
+
+---
+
+## 5. Do NOT Change
+
+- voting logic
+- queue logic
+- Supabase queries
+- middleware
+- authentication
+- existing UI layout (except overlay and mute button)
+
+---
+
+## Output Expectation
+
+- A clean onboarding modal shown only once
+- Background audio that loops and respects browser policies
+- A working mute/unmute button in bottom-right
+- No regressions in existing functionality

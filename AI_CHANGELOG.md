@@ -589,3 +589,33 @@ RLS impact:
 - None. No database policy/query changes.
 Verification performed:
 - Ran `npm test` (`npm run lint`) with 0 errors (existing `<img>` warning only).
+## Entry
+Timestamp: 2026-03-29 14:04:33 -04:00  
+Type: UI/UX enhancement  
+Task: Execute ui-improvement.txt onboarding + ambient audio updates  
+Files changed:
+- `src/app/page.tsx`
+- `src/app/intro-audio-shell.tsx`
+- `public/make-it-weirder.mp3`
+- `AI_CHANGELOG.md`
+Summary:
+- Added a client-side intro/onboarding overlay shown on first visit only, persisted with `localStorage` key `hasSeenIntro`.
+- Added the exact project-purpose intro copy and `Continue` action in a centered dark-theme modal with dimmed blurred backdrop.
+- Added looping background audio (`/make-it-weirder.mp3`) at low default volume (`0.3`).
+- Ensured audio starts only after user interaction: on intro `Continue` and also on first vote button interaction.
+- Added fixed bottom-right circular mute toggle with icon state (`??` / `??`) and persisted preference via `localStorage` key `isMuted`.
+- Kept voting logic, queue logic, Supabase querying, middleware, redirects, and auth flow unchanged.
+Auth impact:
+- None. No auth logic changes.
+RLS impact:
+- None. No database policy/query changes.
+Risk assessment:
+- Low. Changes are client-side UI/interaction only and wrapped around existing page output without modifying server actions.
+Rollback plan:
+- Revert:
+  - `src/app/page.tsx`
+  - `src/app/intro-audio-shell.tsx`
+  - `public/make-it-weirder.mp3`
+Verification performed:
+- Ran `npm test` (`npm run lint`) successfully with 0 errors.
+- Remaining warning is pre-existing/non-blocking: `@next/next/no-img-element` in `src/app/page.tsx`.
