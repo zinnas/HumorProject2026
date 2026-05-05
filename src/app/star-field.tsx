@@ -29,6 +29,8 @@ export default function StarField() {
       return;
     }
 
+    const canvasElement: HTMLCanvasElement = canvas;
+
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     const prefersReducedMotion = mediaQuery.matches;
     const isMobile = window.matchMedia("(max-width: 767px)").matches;
@@ -43,6 +45,8 @@ export default function StarField() {
       return;
     }
 
+    const canvasContext: CanvasRenderingContext2D = context;
+
     let animationFrameId = 0;
     let width = 0;
     let height = 0;
@@ -53,10 +57,10 @@ export default function StarField() {
     function resizeCanvas() {
       width = window.innerWidth;
       height = window.innerHeight;
-      canvas.width = width;
-      canvas.height = height;
-      canvas.style.width = `${width}px`;
-      canvas.style.height = `${height}px`;
+      canvasElement.width = width;
+      canvasElement.height = height;
+      canvasElement.style.width = `${width}px`;
+      canvasElement.style.height = `${height}px`;
 
       stars.splice(0, stars.length);
       for (let index = 0; index < starCount; index += 1) {
@@ -76,7 +80,7 @@ export default function StarField() {
     }
 
     function draw() {
-      context.clearRect(0, 0, width, height);
+      canvasContext.clearRect(0, 0, width, height);
 
       for (const star of stars) {
         const dx = star.x - pointerX;
@@ -97,10 +101,10 @@ export default function StarField() {
         star.x += star.vx;
         star.y += star.vy;
 
-        context.beginPath();
-        context.fillStyle = `rgba(255, 125, 221, ${star.alpha})`;
-        context.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-        context.fill();
+        canvasContext.beginPath();
+        canvasContext.fillStyle = `rgba(255, 125, 221, ${star.alpha})`;
+        canvasContext.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+        canvasContext.fill();
       }
 
       animationFrameId = window.requestAnimationFrame(draw);
