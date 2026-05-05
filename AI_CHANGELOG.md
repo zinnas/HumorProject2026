@@ -651,3 +651,104 @@ Verification performed:
 pm test (
 pm run lint) successfully with 0 errors.
 - Existing non-blocking warning remains for <img> usage in src/app/page.tsx.
+## Entry
+Timestamp: 2026-05-01 08:49:38 -04:00
+Type: Bug fix (audio persistence hardening)
+Task: Keep ambient audio alive across remounts and hard navigations
+Files changed:
+- `src/app/intro-audio-shell.tsx`
+- `AI_CHANGELOG.md`
+Summary:
+- Reworked intro audio ownership to reuse a singleton `Audio` instance stored on `window`, so the player no longer depends on a single React mount surviving.
+- Added `sessionStorage`-backed playback persistence for `currentTime` and playing state, allowing the shell to restore audio position after remounts or a full document navigation.
+- Resume logic now attempts to restart previously playing audio on mount and when the user unmutes after a paused restore.
+- Preserved existing intro gating and mute persistence behavior; no auth, query, or vote flow changes.
+Auth impact:
+- None. No auth logic changes.
+RLS impact:
+- None. No database policy/query changes.
+Risk assessment:
+- Low. Client-side audio lifecycle only; no server or auth behavior changed.
+Rollback plan:
+- Revert:
+  - `src/app/intro-audio-shell.tsx`
+Verification performed:
+- Ran `npm test` after the change.
+## Entry
+Timestamp: 2026-05-05 11:10:00 -04:00
+Type: UI/flow update (public landing, protected onboarding)
+Task: Replace the root page with a public landing experience and add post-login onboarding without breaking existing auth, upload, or voting behavior
+Files changed:
+- `src/app/page.tsx`
+- `src/app/hero.tsx`
+- `src/app/background-grid.tsx`
+- `src/app/neon-wordmark.tsx`
+- `src/app/decorative-orbitals.tsx`
+- `src/app/star-field.tsx`
+- `src/app/theme-toggle.tsx`
+- `src/app/review-app.tsx`
+- `src/app/protected/page.tsx`
+- `src/app/protected/protected-app-shell.tsx`
+- `src/app/protected/sign-out-button.tsx`
+- `src/app/intro-audio-shell.tsx`
+- `src/app/auth/callback/route.ts`
+- `middleware.ts`
+- `src/app/globals.css`
+- `AI_CHANGELOG.md`
+Summary:
+- Replaced the root route with a public neon landing page that delays the `Start` CTA, keeps the existing login mechanism, and routes authenticated users directly to the protected app.
+- Extracted the existing caption review experience into a reusable protected server component and wrapped it in a client shell that adds theme switching, logout, onboarding, and the persistent `?` help control next to Upload.
+- Added a CSS/SVG-based visual system for the landing/protected UI, including a grid/ring backdrop, orbitals, neon wordmark treatment, and a canvas particle layer with cursor repulsion.
+- Preserved upload functionality and vote progression behavior while moving the protected app surface from `/` to `/protected`.
+Auth impact:
+- Middleware route protection moved from `/` to `/protected` so the new public landing page is accessible before login.
+- OAuth callback redirect target changed from `/` to `/protected` so successful login lands in the authenticated onboarding/app flow.
+- Existing middleware auth checks, `supabase.auth.getUser()` checks, redirects to `/login`, and callback exchange logic remain in place.
+RLS impact:
+- None. No database policy/query changes.
+Risk assessment:
+- Medium-low. Auth invariants remain intact, but the protected route path changed from `/` to `/protected`, so regressions would most likely surface as incorrect post-login routing.
+Rollback plan:
+- Revert:
+  - `src/app/page.tsx`
+  - `src/app/hero.tsx`
+  - `src/app/background-grid.tsx`
+  - `src/app/neon-wordmark.tsx`
+  - `src/app/decorative-orbitals.tsx`
+  - `src/app/star-field.tsx`
+  - `src/app/theme-toggle.tsx`
+  - `src/app/review-app.tsx`
+  - `src/app/protected/page.tsx`
+  - `src/app/protected/protected-app-shell.tsx`
+  - `src/app/protected/sign-out-button.tsx`
+  - `src/app/intro-audio-shell.tsx`
+  - `src/app/auth/callback/route.ts`
+  - `middleware.ts`
+  - `src/app/globals.css`
+Verification performed:
+- Ran `npm test` successfully.
+- Existing non-blocking `@next/next/no-img-element` warning remains in `src/app/review-app.tsx`.
+## Entry
+Timestamp: 2026-05-01 09:02:00 -04:00
+Type: Bug fix (vote navigation lifecycle)
+Task: Prevent full-page vote redirects from interrupting persistent audio
+Files changed:
+- `src/app/page.tsx`
+- `src/app/vote-controls.tsx`
+- `AI_CHANGELOG.md`
+Summary:
+- Replaced the vote form submit + server-side `redirect()` flow with a client vote control that calls a server action and then updates `processed_caption_ids` via `router.replace()`.
+- Kept the vote mutation on the server, but changed it to return the next processed caption list instead of forcing a document navigation.
+- This keeps vote progression inside the current document so the persistent intro audio shell is not torn down by a full page load.
+Auth impact:
+- None. No auth logic changes.
+RLS impact:
+- None. No database policy/query changes.
+Risk assessment:
+- Low. Vote UI flow changed from full redirect to client navigation, but the same server-side user check and database writes remain in place.
+Rollback plan:
+- Revert:
+  - `src/app/page.tsx`
+  - `src/app/vote-controls.tsx`
+Verification performed:
+- Ran `npm test` after the change.

@@ -1,0 +1,125 @@
+Update the application UI/flow according to the requirements below.
+
+Important constraints:
+- Do NOT remove any existing functionality.
+- Do NOT break anything that currently works.
+- Preserve the existing authorization/login flow; redirect to the already-implemented login/auth mechanism instead of creating a new one.
+- Preserve the existing upload functionality and place any new UI around it without disrupting it.
+- Make the smallest safe changes needed.
+- If any requirement is ambiguous or conflicts with the current architecture, ask clarifying questions before making destructive changes.
+
+Visual reference:
+Use the attached image as the visual inspiration for the landing page and onboarding UI.
+
+
+1. Full-screen hero section with black / near-black background.
+2. Add a subtle radial/orbital grid using CSS only:
+   - faint circular rings
+   - diagonal/vertical grid lines
+   - low opacity
+3. Center a large stylized title: “[The Humor Project]"
+   - bold italic rounded display style
+   - neon pink fill
+   - darker outline or shadow
+   - layered glow effect
+   - slight 3D/depth feel
+4 Add two or three decorative orbital elements:
+   - small starbursts
+   - abstract flower/galaxy icon
+   - thin connector lines
+   - all in pink with glow
+5. Add vertical side text:
+   - left: “[Zin Narin Nas]”
+   - right: “[2026] Humor Project” and “[Columbia University]”
+6. Make it responsive:
+   - title scales from mobile to desktop
+   - background stays centered
+   - no horizontal overflow
+7. Keep code clean and componentized:
+   - Hero component
+   - BackgroundGrid component
+   - NeonWordmark component
+   - DecorativeOrbitals component
+8. Do not use external images. Use CSS, SVG, and text only.
+9. Include hover/entry animations:
+   - slow glow pulse
+   - slight floating decorative icons
+   - optional Framer Motion if available.
+
+
+
+Design direction:
+- Futuristic neon sci-fi / cyberpunk aesthetic
+- Black or near-black background
+- Hot pink / magenta glowing typography and accents
+- Large rounded italic display title, similar in energy to the “Immersion” wordmark
+- Subtle orbital/radar-style background grid
+- Faint circular rings, diagonal grid lines, and tiny star particles
+- Small abstract decorative icons connected by thin pink lines
+- Soft neon glow around primary UI elements
+- Premium portfolio-style layout
+- Do not copy the exact logo or artwork; reinterpret the style for this app
+- Use CSS/SVG only where possible; avoid adding raster image assets unless already available in the project
+
+Interactive star particles:
+- Add many very small star particles in the landing/onboarding background.
+- Stars should be tiny, subtle, and low-opacity by default.
+- When the user moves the cursor, nearby stars should scatter away from the cursor as if gently repelled by a physical object.
+- The motion should feel natural and smooth, with easing/inertia, not jumpy.
+- Stars should gradually drift back toward their original positions after the cursor moves away.
+- Keep performance high:
+  - Use canvas or an optimized particle layer.
+  - Avoid expensive DOM updates for every star.
+  - Respect reduced-motion preferences.
+  - Disable or simplify the effect on low-powered/mobile devices if needed.
+- The star interaction should be decorative only and must not interfere with buttons, login, upload, onboarding, theme switching, or logout functionality.
+
+Main landing page:
+- Make this the main page users see before login.
+- Use the existing neon/futuristic visual design direction inspired by the “Immersion” reference.
+- Replace the central “Immersion” wordmark/title with “Welcome”.
+- The “Welcome” text should appear first and remain alone for a few seconds.
+- After a short delay, show a “Start” button underneath “Welcome”.
+- When the user clicks “Start”, redirect them to the existing login/authorization flow.
+
+After successful login:
+- Show an informative onboarding/tutorial page before the main app experience.
+- Use a card-based interface for the onboarding pages.
+- The text on each onboarding page should animate with a typewriter effect.
+- Include navigation buttons fixed/aligned at the bottom corners of the card/page.
+
+Onboarding page 1 text:
+“Humor Project is a research platform. We study what people actually find funny by collecting large quantities of votes on AI-generated captions. Our system is designed to leverage specific community context and "insider lore," especially Columbia student culture, because humor is contextual and audience-dependent.”
+
+Page 1 navigation:
+- Show a “Next” button in the bottom-right corner.
+
+Onboarding page 2 text:
+“This application identifies the weekly most downvoted content where the associated image is used frequently. Its purpose is to surface disliked content and prompt users to re-evaluate it. Specifically, we aim to determine whether an image's perceived \"weirdness\" contributes to the content being disliked.”
+
+Page 2 navigation:
+- Show a “Back” button in the bottom-left corner.
+- Show a “Next” button in the bottom-right corner.
+
+Onboarding page 3 text:
+“Additionally, you can generate your own caption by uploading images.”
+
+Page 3 navigation:
+- Show a “Back” button in the bottom-left corner.
+- Show a “START” button in the bottom-right corner.
+
+After onboarding START:
+- When the user clicks “START”, collapse the onboarding text/card.
+- Animate it toward the top-right area of the page.
+- Transform it into a small “?” help button.
+- Place this “?” button to the right of the existing “Upload” button.
+- When the user clicks the “?” button, reopen/show the onboarding text pages again without losing the user’s current app state.
+
+Additional requirements:
+- Add a user-accessible light/dark/theme mode switcher.
+- Add a logout option using the existing authentication/session system.
+- Ensure the UI is responsive and works on mobile and desktop.
+- Keep state management clean so onboarding visibility, current onboarding page, theme mode, and auth state do not interfere with existing app functionality.
+- Reuse existing components/styles where possible.
+- Add comments only where helpful.
+- After implementation, briefly summarize what changed and mention any assumptions made.

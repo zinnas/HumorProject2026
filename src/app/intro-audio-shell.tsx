@@ -1,28 +1,65 @@
 "use client";
 
-import {
-  type PropsWithChildren,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { type PropsWithChildren, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 
-const INTRO_STORAGE_KEY = "hasSeenIntro";
 const MUTE_STORAGE_KEY = "isMuted";
+const PLAYBACK_STATE_KEY = "introAudioPlaybackState";
 
-const INTRO_TEXT =
-  "This application identifies downvoted content where the associated image is labeled as is_common_use = TRUE. Its purpose is to surface disliked content and prompt users to re-evaluate it. Specifically, we aim to determine whether an image’s perceived “weirdness” contributes to the content being disliked.";
+type PlaybackState = {
+  currentTime: number;
+  wasPlaying: boolean;
+};
+
+declare global {
+  interface Window {
+    __introAudio__?: HTMLAudioElement;
+  }
+}
+
+function readPlaybackState(): PlaybackState | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const rawState = window.sessionStorage.getItem(PLAYBACK_STATE_KEY);
+
+  if (!rawState) {
+    return null;
+  }
+
+  try {
+    const parsedState = JSON.parse(rawState) as PlaybackState;
+
+    if (
+      typeof parsedState.currentTime !== "number" ||
+      typeof parsedState.wasPlaying !== "boolean"
+    ) {
+      return null;
+    }
+
+    return parsedState;
+  } catch {
+    return null;
+  }
+}
+
+function writePlaybackState(audio: HTMLAudioElement): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.sessionStorage.setItem(
+    PLAYBACK_STATE_KEY,
+    JSON.stringify({
+      currentTime: audio.currentTime,
+      wasPlaying: !audio.paused && !audio.ended,
+    } satisfies PlaybackState),
+  );
+}
 
 export default function IntroAudioShell({ children }: PropsWithChildren) {
   const pathname = usePathname();
-  const [hasSeenIntro, setHasSeenIntro] = useState<boolean | null>(() => {
-    if (typeof window === "undefined") {
-      return null;
-    }
-    return window.localStorage.getItem(INTRO_STORAGE_KEY) === "true";
-  });
   const [isMuted, setIsMuted] = useState<boolean>(() => {
     if (typeof window === "undefined") {
       return false;
@@ -31,22 +68,77 @@ export default function IntroAudioShell({ children }: PropsWithChildren) {
   });
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const hasStartedRef = useRef(false);
-  const isHomeRoute = pathname === "/";
-
-  const shouldShowIntro = useMemo(() => isHomeRoute && hasSeenIntro === false, [hasSeenIntro, isHomeRoute]);
+  const shouldShowControls = pathname === "/" || pathname === "/protected";
 
   useEffect(() => {
     if (typeof window === "undefined") {
       return;
     }
 
-    const audio = new Audio("/make-it-weirder.mp3");
+    const audio = window.__introAudio__ ?? new Audio("/make-it-weirder.mp3");
+    const playbackState = readPlaybackState();
+
     audio.loop = true;
     audio.volume = 0.3;
+    window.__introAudio__ = audio;
     audioRef.current = audio;
 
+    if (playbackState) {
+      try {
+        audio.currentTime = playbackState.currentTime;
+      } catch {
+        audio.currentTime = 0;
+      }
+      hasStartedRef.current = playbackState.wasPlaying;
+    }
+
+    const persistPlaybackState = (): void => {
+      writePlaybackState(audio);
+    };
+
+    const handleStartAudio = async (event: Event): Promise<void> => {
+      const customEvent = event as CustomEvent<{ fromBeginning?: boolean }>;
+      const fromBeginning = customEvent.detail?.fromBeginning === true;
+
+      if (fromBeginning) {
+        audio.currentTime = 0;
+      }
+
+      try {
+        await audio.play();
+        hasStartedRef.current = true;
+        writePlaybackState(audio);
+      } catch {
+        // Ignore browser autoplay failures.
+      }
+    };
+
+    const resumeAudioIfNeeded = async (): Promise<void> => {
+      if (!playbackState?.wasPlaying) {
+        return;
+      }
+
+      try {
+        await audio.play();
+      } catch {
+        // Ignore browser autoplay failures after a hard navigation.
+      }
+    };
+
+    audio.addEventListener("play", persistPlaybackState);
+    audio.addEventListener("pause", persistPlaybackState);
+    audio.addEventListener("timeupdate", persistPlaybackState);
+    window.addEventListener("pagehide", persistPlaybackState);
+    window.addEventListener("humorproject:start-audio", handleStartAudio as EventListener);
+    void resumeAudioIfNeeded();
+
     return () => {
-      audio.pause();
+      persistPlaybackState();
+      audio.removeEventListener("play", persistPlaybackState);
+      audio.removeEventListener("pause", persistPlaybackState);
+      audio.removeEventListener("timeupdate", persistPlaybackState);
+      window.removeEventListener("pagehide", persistPlaybackState);
+      window.removeEventListener("humorproject:start-audio", handleStartAudio as EventListener);
       audioRef.current = null;
     };
   }, []);
@@ -57,6 +149,7 @@ export default function IntroAudioShell({ children }: PropsWithChildren) {
     }
 
     audioRef.current.muted = isMuted;
+    writePlaybackState(audioRef.current);
   }, [isMuted]);
 
   const startAudio = async (fromBeginning = false): Promise<void> => {
@@ -75,17 +168,10 @@ export default function IntroAudioShell({ children }: PropsWithChildren) {
     try {
       await audioRef.current.play();
       hasStartedRef.current = true;
+      writePlaybackState(audioRef.current);
     } catch {
       // Ignore browser autoplay failures.
     }
-  };
-
-  const onContinue = async (): Promise<void> => {
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(INTRO_STORAGE_KEY, "true");
-    }
-    setHasSeenIntro(true);
-    await startAudio(true);
   };
 
   const onToggleMute = (): void => {
@@ -94,38 +180,25 @@ export default function IntroAudioShell({ children }: PropsWithChildren) {
     if (typeof window !== "undefined") {
       window.localStorage.setItem(MUTE_STORAGE_KEY, String(nextMuted));
     }
+    if (!nextMuted && audioRef.current && hasStartedRef.current && audioRef.current.paused) {
+      void startAudio();
+    }
   };
 
   return (
     <div>
       {children}
 
-      {hasSeenIntro !== null && isHomeRoute && (
+      {shouldShowControls ? (
         <button
           type="button"
           onClick={onToggleMute}
           aria-label={isMuted ? "Unmute background audio" : "Mute background audio"}
-          className="fixed bottom-5 right-5 z-40 flex h-12 w-12 items-center justify-center rounded-full border border-slate-600 bg-slate-900/90 text-xl text-slate-100 shadow-[0_0_14px_rgba(56,189,248,0.22)] transition hover:scale-105 hover:border-slate-400"
+          className="fixed bottom-5 right-5 z-50 flex h-12 w-12 items-center justify-center rounded-full border border-[var(--theme-border-strong)] bg-[var(--theme-surface)] text-sm font-semibold text-[var(--theme-text)] shadow-[0_0_18px_var(--theme-shadow)] transition hover:scale-105"
         >
-          {isMuted ? "🔇" : "🔊"}
+          {isMuted ? "Off" : "On"}
         </button>
-      )}
-
-      {shouldShowIntro && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-6 backdrop-blur-sm">
-          <div className="w-full max-w-2xl rounded-2xl border border-slate-700 bg-slate-900/95 p-7 shadow-[0_18px_40px_rgba(0,0,0,0.65)]">
-            <h2 className="text-2xl font-semibold text-slate-100">Welcome</h2>
-            <p className="mt-4 text-sm leading-7 text-slate-200">{INTRO_TEXT}</p>
-            <button
-              type="button"
-              onClick={onContinue}
-              className="mt-6 rounded-lg bg-amber-400 px-5 py-2.5 text-sm font-semibold text-black transition hover:bg-amber-300"
-            >
-              Continue
-            </button>
-          </div>
-        </div>
-      )}
+      ) : null}
     </div>
   );
 }

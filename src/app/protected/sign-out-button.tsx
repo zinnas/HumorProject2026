@@ -1,10 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import type { ComponentPropsWithoutRef } from "react";
 
 import { createClient } from "@/utils/supabase/client";
 
-export default function SignOutButton() {
+type SignOutButtonProps = ComponentPropsWithoutRef<"button">;
+
+export default function SignOutButton({ className }: SignOutButtonProps) {
   const router = useRouter();
 
   const handleSignOut = async () => {
@@ -18,9 +21,12 @@ export default function SignOutButton() {
     <button
       type="button"
       onClick={handleSignOut}
-      className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700"
+      className={
+        className ??
+        "rounded-full border border-[var(--theme-border-strong)] bg-[var(--theme-surface)] px-4 py-2 text-sm font-medium text-[var(--theme-text)] shadow-[0_0_18px_var(--theme-shadow)] transition hover:-translate-y-0.5"
+      }
     >
-      Sign out
+      Logout
     </button>
   );
 }
