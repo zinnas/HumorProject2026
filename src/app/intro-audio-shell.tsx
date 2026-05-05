@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 const MUTE_STORAGE_KEY = "isMuted";
 const PLAYBACK_STATE_KEY = "introAudioPlaybackState";
 
+
 type PlaybackState = {
   currentTime: number;
   wasPlaying: boolean;

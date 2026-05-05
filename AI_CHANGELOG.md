@@ -729,6 +729,36 @@ Verification performed:
 - Ran `npm test` successfully.
 - Existing non-blocking `@next/next/no-img-element` warning remains in `src/app/review-app.tsx`.
 ## Entry
+Timestamp: 2026-05-05 13:42:00 -04:00
+Type: Queue logic update (caption-image weekly shuffle)
+Task: Rotate weekly downvoted caption-image pairs by user history while avoiding back-to-back duplicate images
+Files changed:
+- `src/app/review-app.tsx`
+- `src/app/review-seen-tracker.tsx`
+- `src/app/vote-controls.tsx`
+- `AI_CHANGELOG.md`
+Summary:
+- Reworked the review queue to operate on caption-image pairs rather than image-only items, so different captions attached to the same downvoted image can still appear later in the weekly queue.
+- Built a weekly round-robin shuffle over distinct images: the first pass shows one caption per image, then later passes surface additional captions for those images only after the distinct-image pass completes.
+- Added a back-to-back image guard so, when alternatives exist, the next selected pair does not reuse the image shown immediately before it.
+- Added client-persisted seen-caption and last-image tracking for the active week so users returning mid-queue continue from unseen caption-image pairs instead of restarting the same items.
+- Corrected vote navigation to continue advancing inside `/protected`.
+Auth impact:
+- None. No auth logic changes.
+RLS impact:
+- None. No database policy/query changes.
+Risk assessment:
+- Medium. Queue selection now depends on weekly vote timestamps, persisted seen-caption cookies, and deterministic shuffle logic, so regressions would most likely appear as an unexpectedly empty queue or surprising ordering.
+Rollback plan:
+- Revert:
+  - `src/app/review-app.tsx`
+  - `src/app/review-seen-tracker.tsx`
+  - `src/app/vote-controls.tsx`
+Verification performed:
+- Ran `npm test` successfully.
+- Ran `npm run build` successfully.
+- Existing non-blocking `@next/next/no-img-element` warning remains in `src/app/review-app.tsx`.
+## Entry
 Timestamp: 2026-05-01 09:02:00 -04:00
 Type: Bug fix (vote navigation lifecycle)
 Task: Prevent full-page vote redirects from interrupting persistent audio

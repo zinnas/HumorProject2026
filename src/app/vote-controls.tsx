@@ -5,18 +5,22 @@ import { useTransition } from "react";
 
 type VoteControlsProps = {
   captionId: string;
+  imageId: string;
   processedCaptionIds: string[];
   onVote: (payload: {
     captionId: string;
+    imageId: string;
     voteValue: number;
     processedCaptionIds: string[];
   }) => Promise<{
     nextProcessedCaptionIds: string[];
+    lastImageId: string;
   }>;
 };
 
 export default function VoteControls({
   captionId,
+  imageId,
   processedCaptionIds,
   onVote,
 }: VoteControlsProps) {
@@ -27,15 +31,19 @@ export default function VoteControls({
     startTransition(async () => {
       const result = await onVote({
         captionId,
+        imageId,
         voteValue,
         processedCaptionIds,
       });
 
-      const nextProcessedCaptionIdsParam = encodeURIComponent(
+      const params = new URLSearchParams();
+      params.set(
+        "processed_caption_ids",
         result.nextProcessedCaptionIds.join(","),
       );
+      params.set("last_image_id", result.lastImageId);
 
-      router.replace(`/?processed_caption_ids=${nextProcessedCaptionIdsParam}`, {
+      router.replace(`/protected?${params.toString()}`, {
         scroll: false,
       });
     });
