@@ -6,8 +6,10 @@ import UploadModal from "../upload-modal";
 import ThemeToggle from "../theme-toggle";
 import SignOutButton from "./sign-out-button";
 
+const INTRO_STORAGE_KEY = "hasSeenIntro";
 const ONBOARDING_STORAGE_KEY = "humor-project-onboarding-complete";
 const ONBOARDING_VIEWED_PAGES_KEY = "humor-project-onboarding-viewed-pages";
+const PLAYBACK_STATE_KEY = "introAudioPlaybackState";
 
 const ONBOARDING_PAGES = [
   "Humor Project is a research platform. We study what people actually find funny by collecting large quantities of votes on AI-generated captions. Our system is designed to leverage specific community context and \"insider lore,\" especially Columbia student culture, because humor is contextual and audience-dependent.",
@@ -188,6 +190,39 @@ function readOnboardingCompletion() {
   return window.localStorage.getItem(ONBOARDING_STORAGE_KEY) === "true";
 }
 
+function readPlaybackState() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const rawValue = window.localStorage.getItem(PLAYBACK_STATE_KEY);
+
+  if (!rawValue) {
+    return null;
+  }
+
+  try {
+    const parsedValue = JSON.parse(rawValue) as {
+      currentTime?: unknown;
+      wasPlaying?: unknown;
+    };
+
+    if (
+      typeof parsedValue.currentTime !== "number" ||
+      typeof parsedValue.wasPlaying !== "boolean"
+    ) {
+      return null;
+    }
+
+    return {
+      currentTime: parsedValue.currentTime,
+      wasPlaying: parsedValue.wasPlaying,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export default function ProtectedAppShell({
   children,
   userEmail,
@@ -205,6 +240,33 @@ export default function ProtectedAppShell({
       setHasCompletedOnboarding(isComplete);
       setIsOnboardingVisible(!isComplete);
       setHasInitialized(true);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+    };
+  }, []);
+
+  useEffect(() => {
+    const hasSeenIntro = window.localStorage.getItem(INTRO_STORAGE_KEY) === "true";
+    const playbackState = readPlaybackState();
+
+    if (!hasSeenIntro) {
+      return;
+    }
+
+    if (playbackState?.wasPlaying === false) {
+      return;
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      window.dispatchEvent(
+        new CustomEvent("humorproject:start-audio", {
+          detail: {
+            fromBeginning: !playbackState || playbackState.currentTime <= 0,
+          },
+        }),
+      );
     });
 
     return () => {

@@ -8,14 +8,6 @@ import NeonWordmark from "./neon-wordmark";
 import StarField from "./star-field";
 import ThemeToggle from "./theme-toggle";
 
-const PLAYBACK_STATE_KEY = "introAudioPlaybackState";
-
-declare global {
-  interface Window {
-    __introAudio__?: HTMLAudioElement;
-  }
-}
-
 export default function Hero() {
   const router = useRouter();
   const [showStart, setShowStart] = useState(false);
@@ -32,35 +24,6 @@ export default function Hero() {
 
   function handleStart() {
     window.localStorage.setItem("hasSeenIntro", "true");
-    const audio = window.__introAudio__;
-    const hasPlaybackState = window.localStorage.getItem(PLAYBACK_STATE_KEY);
-    const shouldRestart = !hasPlaybackState && (!audio || audio.currentTime <= 0);
-
-    if (audio) {
-      window.localStorage.setItem(
-        PLAYBACK_STATE_KEY,
-        JSON.stringify({
-          currentTime: shouldRestart ? 0 : audio.currentTime,
-          wasPlaying: true,
-        }),
-      );
-    } else {
-      window.localStorage.setItem(
-        PLAYBACK_STATE_KEY,
-        JSON.stringify({
-          currentTime: 0,
-          wasPlaying: true,
-        }),
-      );
-    }
-
-    window.dispatchEvent(
-      new CustomEvent("humorproject:start-audio", {
-        detail: {
-          fromBeginning: shouldRestart,
-        },
-      }),
-    );
     router.push("/login");
   }
 

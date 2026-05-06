@@ -13,8 +13,8 @@ type Star = {
   alpha: number;
 };
 
-const DESKTOP_STAR_COUNT = 120;
-const MOBILE_STAR_COUNT = 48;
+const DESKTOP_STAR_COUNT = 220;
+const MOBILE_STAR_COUNT = 90;
 const REPULSION_RADIUS = 110;
 const RETURN_FORCE = 0.018;
 const FRICTION = 0.9;
