@@ -315,27 +315,28 @@ export default function UploadModal() {
       <button
         type="button"
         onClick={openModal}
-        className="rounded-full border border-[#1e293b] bg-[#020617] px-5 py-2 text-sm font-semibold text-[#e5e7eb] transition-transform duration-200 hover:-translate-y-0.5"
+        className="theme-ghost-button rounded-full px-5 py-2 text-sm font-semibold uppercase tracking-[0.22em]"
       >
         Upload
       </button>
 
       {isOpen ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-4"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) {
               closeModal();
             }
           }}
         >
-          <div className="w-full max-w-xl rounded-[24px] border border-slate-900 bg-[#08122F] p-6 shadow-[0_10px_30px_rgba(0,0,0,0.6),0_0_20px_rgba(34,197,94,0.08),0_0_24px_rgba(124,58,237,0.12)]">
-            <h2 className="text-xl font-semibold text-[#F8FAFC]">Upload Image</h2>
-            <p className="mt-1 text-sm text-[#CBD5E1]">
+          <div className="app-card flex max-h-[90vh] w-full max-w-xl flex-col overflow-hidden rounded-[24px] p-6 shadow-[0_10px_30px_rgba(0,0,0,0.6),0_0_20px_var(--theme-shadow)]">
+            <h2 className="text-xl font-semibold text-[var(--theme-text)]">Upload Image</h2>
+            <p className="mt-1 text-sm text-[var(--theme-muted)]">
               Select an image to upload and create your own Humor Content.
             </p>
 
-            <label className="mt-4 block text-sm text-[#CBD5E1]" htmlFor="caption-upload-file">
+            <div className="mt-4 min-h-0 flex-1 overflow-y-auto pr-1">
+            <label className="block text-sm text-[var(--theme-muted)]" htmlFor="caption-upload-file">
               Image File (JPG, JPEG, PNG, WEBP, GIF, HEIC)
             </label>
             <input
@@ -344,24 +345,24 @@ export default function UploadModal() {
               type="file"
               accept={ACCEPT_ATTR}
               onChange={handleFileChange}
-              className="mt-2 block w-full rounded-lg border border-slate-700 bg-[#020617] p-2 text-sm text-slate-100 file:mr-3 file:rounded-md file:border-0 file:bg-[#fbbf24] file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-black"
+              className="mt-2 block w-full rounded-lg border border-[var(--theme-border-strong)] bg-[var(--theme-surface)] p-2 text-sm text-[var(--theme-text)] file:mr-3 file:rounded-md file:border-0 file:bg-[var(--theme-accent)] file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-black"
             />
 
             {selectedFile ? (
-              <p className="mt-2 text-xs text-slate-400">
+              <p className="mt-2 text-xs text-[var(--theme-muted)]">
                 Selected: {selectedFile.name} ({selectedTypeLabel})
               </p>
             ) : null}
 
             {previewUrl ? (
-              <div className="mt-4 overflow-hidden rounded-[16px] border border-slate-800">
+              <div className="mt-4 overflow-hidden rounded-[16px] border border-[var(--theme-border)]">
                 <Image
                   src={previewUrl}
                   alt="Selected image preview"
                   width={960}
                   height={540}
                   unoptimized
-                  className="h-[260px] w-full object-contain bg-[#020617]"
+                  className="h-[260px] w-full object-contain bg-[var(--theme-surface)]"
                 />
               </div>
             ) : null}
@@ -379,13 +380,13 @@ export default function UploadModal() {
             ) : null}
 
             {generatedCaptions.length > 0 ? (
-              <section className="mt-4 rounded-2xl border border-slate-800/80 bg-[linear-gradient(180deg,rgba(2,6,23,0.9),rgba(2,6,23,0.65))] p-3 shadow-[inset_0_1px_0_rgba(148,163,184,0.08)]">
-                <h3 className="px-1 text-sm font-semibold text-slate-100">Generated Captions</h3>
-                <div className="mt-2 max-h-52 space-y-2 overflow-y-auto pr-1">
+              <section className="mt-4 rounded-2xl border border-[var(--theme-border)] bg-[linear-gradient(180deg,var(--theme-surface-strong),var(--theme-card))] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+                <h3 className="px-1 text-sm font-semibold text-[var(--theme-text)]">Generated Captions</h3>
+                <div className="mt-2 max-h-56 space-y-2 overflow-y-auto pr-1">
                   {generatedCaptions.map((captionText, index) => (
                     <article
                       key={`${captionText}-${index}`}
-                      className="rounded-xl border border-slate-700/60 bg-[#0A1226] px-3 py-2 text-sm text-slate-200 shadow-[0_6px_18px_rgba(2,6,23,0.4)]"
+                      className="rounded-xl border border-[var(--theme-border)] bg-[var(--theme-surface)] px-3 py-2 text-sm text-[var(--theme-text)] shadow-[0_6px_18px_rgba(2,6,23,0.25)]"
                     >
                       {captionText}
                     </article>
@@ -393,15 +394,16 @@ export default function UploadModal() {
                 </div>
               </section>
             ) : null}
+            </div>
 
             <div className="mt-5 flex items-center justify-between gap-3">
-              <p className="min-h-[20px] text-xs text-slate-400">{isSubmitting ? statusText : ""}</p>
+              <p className="min-h-[20px] text-xs text-[var(--theme-muted)]">{isSubmitting ? statusText : ""}</p>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={closeModal}
                   disabled={isSubmitting}
-                  className="rounded-full border border-[#1e293b] bg-[#020617] px-4 py-2 text-sm font-medium text-[#e5e7eb] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="theme-ghost-button rounded-full px-4 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   Close
                 </button>
@@ -411,7 +413,7 @@ export default function UploadModal() {
                     type="button"
                     onClick={discardSelection}
                     disabled={isSubmitting}
-                    className="rounded-full border border-slate-700 bg-[#0B1328] px-4 py-2 text-sm font-medium text-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="theme-subtle-button rounded-full px-4 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     Discard
                   </button>
@@ -422,7 +424,7 @@ export default function UploadModal() {
                     type="button"
                     onClick={handleSubmit}
                     disabled={isSubmitting}
-                    className="rounded-full bg-[#fbbf24] px-5 py-2 text-sm font-bold text-black disabled:cursor-not-allowed disabled:opacity-60"
+                    className="theme-accent-button rounded-full px-5 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {isSubmitting ? statusText ?? "Uploading..." : "Submit"}
                   </button>

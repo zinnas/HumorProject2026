@@ -8,6 +8,14 @@ import NeonWordmark from "./neon-wordmark";
 import StarField from "./star-field";
 import ThemeToggle from "./theme-toggle";
 
+const PLAYBACK_STATE_KEY = "introAudioPlaybackState";
+
+declare global {
+  interface Window {
+    __introAudio__?: HTMLAudioElement;
+  }
+}
+
 export default function Hero() {
   const router = useRouter();
   const [showStart, setShowStart] = useState(false);
@@ -24,10 +32,32 @@ export default function Hero() {
 
   function handleStart() {
     window.localStorage.setItem("hasSeenIntro", "true");
+    const audio = window.__introAudio__;
+    const hasPlaybackState = window.localStorage.getItem(PLAYBACK_STATE_KEY);
+    const shouldRestart = !hasPlaybackState && (!audio || audio.currentTime <= 0);
+
+    if (audio) {
+      window.localStorage.setItem(
+        PLAYBACK_STATE_KEY,
+        JSON.stringify({
+          currentTime: shouldRestart ? 0 : audio.currentTime,
+          wasPlaying: true,
+        }),
+      );
+    } else {
+      window.localStorage.setItem(
+        PLAYBACK_STATE_KEY,
+        JSON.stringify({
+          currentTime: 0,
+          wasPlaying: true,
+        }),
+      );
+    }
+
     window.dispatchEvent(
       new CustomEvent("humorproject:start-audio", {
         detail: {
-          fromBeginning: true,
+          fromBeginning: shouldRestart,
         },
       }),
     );
@@ -64,12 +94,9 @@ export default function Hero() {
             The Humor Project
           </p>
           <NeonWordmark text="Welcome" />
-          <p className="mt-6 max-w-xl text-sm leading-7 text-[var(--theme-muted)] sm:text-base">
-            A neon gateway into The Humor Project&apos;s caption evaluation workflow.
-          </p>
 
           <div
-            className={`mt-10 transition-all duration-700 ${
+            className={`mt-8 transition-all duration-700 sm:mt-10 ${
               showStart
                 ? "translate-y-0 opacity-100"
                 : "pointer-events-none translate-y-4 opacity-0"

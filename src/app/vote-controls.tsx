@@ -55,7 +55,7 @@ export default function VoteControls({
         type="button"
         onClick={() => handleVote(-1)}
         disabled={isPending}
-        className="rounded-full border border-[#1e293b] bg-[#020617] px-6 py-3 text-sm font-medium text-[#e5e7eb] transition-transform duration-200 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+        className="theme-ghost-button rounded-full px-6 py-3 text-sm font-semibold uppercase tracking-[0.2em] disabled:cursor-not-allowed disabled:opacity-60"
       >
         No
       </button>
@@ -63,7 +63,7 @@ export default function VoteControls({
         type="button"
         onClick={() => handleVote(1)}
         disabled={isPending}
-        className="rounded-full bg-[#fbbf24] px-6 py-3 text-sm font-bold text-black transition-transform duration-200 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+        className="theme-accent-button rounded-full px-6 py-3 text-sm font-bold uppercase tracking-[0.2em] disabled:cursor-not-allowed disabled:opacity-60"
       >
         Yes
       </button>

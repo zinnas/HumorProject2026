@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 const MUTE_STORAGE_KEY = "isMuted";
 const PLAYBACK_STATE_KEY = "introAudioPlaybackState";
 
-
 type PlaybackState = {
   currentTime: number;
   wasPlaying: boolean;
@@ -23,7 +22,7 @@ function readPlaybackState(): PlaybackState | null {
     return null;
   }
 
-  const rawState = window.sessionStorage.getItem(PLAYBACK_STATE_KEY);
+  const rawState = window.localStorage.getItem(PLAYBACK_STATE_KEY);
 
   if (!rawState) {
     return null;
@@ -50,7 +49,7 @@ function writePlaybackState(audio: HTMLAudioElement): void {
     return;
   }
 
-  window.sessionStorage.setItem(
+  window.localStorage.setItem(
     PLAYBACK_STATE_KEY,
     JSON.stringify({
       currentTime: audio.currentTime,
@@ -91,6 +90,8 @@ export default function IntroAudioShell({ children }: PropsWithChildren) {
         audio.currentTime = 0;
       }
       hasStartedRef.current = playbackState.wasPlaying;
+    } else {
+      hasStartedRef.current = audio.dataset.started === "true";
     }
 
     const persistPlaybackState = (): void => {
@@ -108,6 +109,7 @@ export default function IntroAudioShell({ children }: PropsWithChildren) {
       try {
         await audio.play();
         hasStartedRef.current = true;
+        audio.dataset.started = "true";
         writePlaybackState(audio);
       } catch {
         // Ignore browser autoplay failures.
@@ -121,6 +123,9 @@ export default function IntroAudioShell({ children }: PropsWithChildren) {
 
       try {
         await audio.play();
+        hasStartedRef.current = true;
+        audio.dataset.started = "true";
+        writePlaybackState(audio);
       } catch {
         // Ignore browser autoplay failures after a hard navigation.
       }
@@ -169,6 +174,7 @@ export default function IntroAudioShell({ children }: PropsWithChildren) {
     try {
       await audioRef.current.play();
       hasStartedRef.current = true;
+      audioRef.current.dataset.started = "true";
       writePlaybackState(audioRef.current);
     } catch {
       // Ignore browser autoplay failures.

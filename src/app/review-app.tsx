@@ -480,7 +480,7 @@ export default async function ReviewApp({ searchParams }: ReviewAppProps) {
           Re-evaluate Content
         </h1>
         <p className="text-sm text-[var(--theme-muted)] sm:text-base">
-          This week&apos;s downvoted caption-image pairs, shuffled across distinct images first.
+          Do you find this image weird?
         </p>
       </header>
 

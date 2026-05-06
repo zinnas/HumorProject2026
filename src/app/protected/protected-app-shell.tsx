@@ -7,17 +7,53 @@ import ThemeToggle from "../theme-toggle";
 import SignOutButton from "./sign-out-button";
 
 const ONBOARDING_STORAGE_KEY = "humor-project-onboarding-complete";
+const ONBOARDING_VIEWED_PAGES_KEY = "humor-project-onboarding-viewed-pages";
 
 const ONBOARDING_PAGES = [
   "Humor Project is a research platform. We study what people actually find funny by collecting large quantities of votes on AI-generated captions. Our system is designed to leverage specific community context and \"insider lore,\" especially Columbia student culture, because humor is contextual and audience-dependent.",
   "This application identifies the weekly most downvoted content where the associated image is used frequently. Its purpose is to surface disliked content and prompt users to re-evaluate it. Specifically, we aim to determine whether an image's perceived \"weirdness\" contributes to the content being disliked.",
-  "Additionally, you can generate your own caption by uploading images.",
+  "You can also generate your own content by using the \"Upload\" button.",
 ];
 
 type ProtectedAppShellProps = {
   children: ReactNode;
   userEmail: string;
 };
+
+function readViewedOnboardingPages(): number[] {
+  if (typeof window === "undefined") {
+    return [];
+  }
+
+  const rawValue = window.localStorage.getItem(ONBOARDING_VIEWED_PAGES_KEY);
+
+  if (!rawValue) {
+    return [];
+  }
+
+  try {
+    const parsedValue = JSON.parse(rawValue) as unknown;
+
+    if (!Array.isArray(parsedValue)) {
+      return [];
+    }
+
+    return parsedValue.filter((value): value is number => typeof value === "number");
+  } catch {
+    return [];
+  }
+}
+
+function writeViewedOnboardingPages(viewedPages: number[]) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.setItem(
+    ONBOARDING_VIEWED_PAGES_KEY,
+    JSON.stringify(Array.from(new Set(viewedPages)).sort((left, right) => left - right)),
+  );
+}
 
 function TypewriterText({ text }: { text: string }) {
   const [visibleText, setVisibleText] = useState("");
@@ -68,13 +104,19 @@ function TypewriterText({ text }: { text: string }) {
 function OnboardingOverlay({
   currentPage,
   isClosing,
+  canCloseDirectly,
+  hasSeenCurrentPage,
   onBack,
+  onClose,
   onNext,
   onFinish,
 }: {
   currentPage: number;
   isClosing: boolean;
+  canCloseDirectly: boolean;
+  hasSeenCurrentPage: boolean;
   onBack: () => void;
+  onClose: () => void;
   onNext: () => void;
   onFinish: () => void;
 }) {
@@ -89,11 +131,22 @@ function OnboardingOverlay({
           isClosing ? "onboarding-card-closing" : "opacity-100"
         }`}
       >
+        {canCloseDirectly ? (
+          <button
+            type="button"
+            onClick={onClose}
+            className="theme-ghost-button absolute right-5 top-5 rounded-full px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.24em]"
+            aria-label="Close onboarding"
+          >
+            X
+          </button>
+        ) : null}
+
         <p className="text-xs uppercase tracking-[0.5em] text-[var(--theme-accent-soft)]">
           Onboarding {currentPage + 1}
         </p>
         <div className="mt-6 min-h-[240px] pb-24 text-lg leading-8 text-[var(--theme-text)] sm:min-h-[220px] sm:text-[1.35rem]">
-          {isClosing ? (
+          {isClosing || hasSeenCurrentPage ? (
             currentText
           ) : (
             <TypewriterText key={currentPage} text={currentText} />
@@ -143,10 +196,14 @@ export default function ProtectedAppShell({
   const [isOnboardingClosing, setIsOnboardingClosing] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [hasInitialized, setHasInitialized] = useState(false);
+  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
+  const [viewedPages, setViewedPages] = useState<number[]>(() => readViewedOnboardingPages());
 
   useEffect(() => {
     const frameId = window.requestAnimationFrame(() => {
-      setIsOnboardingVisible(!readOnboardingCompletion());
+      const isComplete = readOnboardingCompletion();
+      setHasCompletedOnboarding(isComplete);
+      setIsOnboardingVisible(!isComplete);
       setHasInitialized(true);
     });
 
@@ -155,17 +212,34 @@ export default function ProtectedAppShell({
     };
   }, []);
 
+  function markPageSeen(pageIndex: number) {
+    setViewedPages((currentPages) => {
+      if (currentPages.includes(pageIndex)) {
+        return currentPages;
+      }
+
+      const nextPages = [...currentPages, pageIndex];
+      writeViewedOnboardingPages(nextPages);
+      return nextPages;
+    });
+  }
+
   function handleFinishOnboarding() {
     setIsOnboardingClosing(true);
 
     window.setTimeout(() => {
+      const allPages = ONBOARDING_PAGES.map((_, index) => index);
       window.localStorage.setItem(ONBOARDING_STORAGE_KEY, "true");
+      writeViewedOnboardingPages(allPages);
+      setViewedPages(allPages);
+      setHasCompletedOnboarding(true);
       setIsOnboardingVisible(false);
       setIsOnboardingClosing(false);
     }, 680);
   }
 
   const showHelpButton = hasInitialized && !isOnboardingVisible && !isOnboardingClosing;
+  const hasSeenCurrentPage = viewedPages.includes(currentPage);
   const subtitle = useMemo(() => {
     return userEmail === "No email on profile" ? userEmail : `Signed in as ${userEmail}`;
   }, [userEmail]);
@@ -212,10 +286,20 @@ export default function ProtectedAppShell({
         <OnboardingOverlay
           currentPage={currentPage}
           isClosing={isOnboardingClosing}
-          onBack={() => setCurrentPage((page) => Math.max(0, page - 1))}
-          onNext={() =>
-            setCurrentPage((page) => Math.min(ONBOARDING_PAGES.length - 1, page + 1))
-          }
+          canCloseDirectly={hasCompletedOnboarding}
+          hasSeenCurrentPage={hasSeenCurrentPage}
+          onBack={() => {
+            markPageSeen(currentPage);
+            setCurrentPage((page) => Math.max(0, page - 1));
+          }}
+          onClose={() => {
+            markPageSeen(currentPage);
+            setIsOnboardingVisible(false);
+          }}
+          onNext={() => {
+            markPageSeen(currentPage);
+            setCurrentPage((page) => Math.min(ONBOARDING_PAGES.length - 1, page + 1));
+          }}
           onFinish={handleFinishOnboarding}
         />
       ) : null}

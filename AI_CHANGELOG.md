@@ -675,6 +675,44 @@ Rollback plan:
 Verification performed:
 - Ran `npm test` after the change.
 ## Entry
+Timestamp: 2026-05-05 14:18:00 -04:00
+Type: UI polish and onboarding/audio behavior update
+Task: Align the landing/onboarding/review UI with the latest reference and fix audio resume plus modal usability issues
+Files changed:
+- `src/app/hero.tsx`
+- `src/app/intro-audio-shell.tsx`
+- `src/app/protected/protected-app-shell.tsx`
+- `src/app/review-app.tsx`
+- `src/app/vote-controls.tsx`
+- `src/app/upload-modal.tsx`
+- `src/app/globals.css`
+- `AI_CHANGELOG.md`
+Summary:
+- Removed the extra landing-page supporting sentence, kept the hero tighter to the visual reference, and made the start action preserve audio playback state before navigating into login.
+- Switched intro playback persistence to `localStorage` so music can resume across the login/auth round-trip from the last saved position instead of restarting or stopping.
+- Changed onboarding behavior so typewriter animation only runs the first time each page is seen, updated the third onboarding page copy, and added a direct `X` close action when reopening onboarding from the `?` help button after completion.
+- Restored the review question text to `Do you find this image weird?` and removed the extra queue-description sentence under the review title.
+- Restyled the vote and upload-related buttons to match the active neon theme and constrained the upload modal to a scrollable viewport so the footer remains reachable after caption generation expands the content.
+Auth impact:
+- None. No auth logic changes.
+RLS impact:
+- None. No database policy/query changes.
+Risk assessment:
+- Low. Changes are limited to client-side UI state, playback persistence, and presentation classes; regressions would most likely show up as onboarding state not reopening correctly or audio resume not matching the last saved position.
+Rollback plan:
+- Revert:
+  - `src/app/hero.tsx`
+  - `src/app/intro-audio-shell.tsx`
+  - `src/app/protected/protected-app-shell.tsx`
+  - `src/app/review-app.tsx`
+  - `src/app/vote-controls.tsx`
+  - `src/app/upload-modal.tsx`
+  - `src/app/globals.css`
+Verification performed:
+- Ran `npm test` successfully.
+- Ran `npm run build` successfully.
+- Existing non-blocking `@next/next/no-img-element` warning remains in `src/app/review-app.tsx`.
+## Entry
 Timestamp: 2026-05-05 11:10:00 -04:00
 Type: UI/flow update (public landing, protected onboarding)
 Task: Replace the root page with a public landing experience and add post-login onboarding without breaking existing auth, upload, or voting behavior
