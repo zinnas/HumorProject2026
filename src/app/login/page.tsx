@@ -2,34 +2,9 @@
 
 import { createClient } from "@/utils/supabase/client";
 
-const PLAYBACK_STATE_KEY = "introAudioPlaybackState";
-
-declare global {
-  interface Window {
-    __introAudio__?: HTMLAudioElement;
-  }
-}
-
 export default function LoginPage() {
   const handleSignIn = async () => {
     const supabase = createClient();
-    const existingAudio = window.__introAudio__;
-
-    window.localStorage.setItem(
-      PLAYBACK_STATE_KEY,
-      JSON.stringify({
-        currentTime: existingAudio?.currentTime ?? 0,
-        wasPlaying: true,
-      }),
-    );
-
-    window.dispatchEvent(
-      new CustomEvent("humorproject:start-audio", {
-        detail: {
-          fromBeginning: !existingAudio || existingAudio.currentTime <= 0,
-        },
-      }),
-    );
 
     await supabase.auth.signInWithOAuth({
       provider: "google",
