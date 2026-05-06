@@ -10,6 +10,7 @@ const INTRO_STORAGE_KEY = "hasSeenIntro";
 const ONBOARDING_STORAGE_KEY = "humor-project-onboarding-complete";
 const ONBOARDING_VIEWED_PAGES_KEY = "humor-project-onboarding-viewed-pages";
 const PLAYBACK_STATE_KEY = "introAudioPlaybackState";
+const PLAY_NEXT_AFTER_LOGIN_KEY = "humorprojectPlayNextAfterLogin";
 
 const ONBOARDING_PAGES = [
   "Humor Project is a research platform. We study what people actually find funny by collecting large quantities of votes on AI-generated captions. Our system is designed to leverage specific community context and \"insider lore,\" especially Columbia student culture, because humor is contextual and audience-dependent.",
@@ -250,20 +251,27 @@ export default function ProtectedAppShell({
   useEffect(() => {
     const hasSeenIntro = window.localStorage.getItem(INTRO_STORAGE_KEY) === "true";
     const playbackState = readPlaybackState();
+    const shouldAdvanceTrack = window.localStorage.getItem(PLAY_NEXT_AFTER_LOGIN_KEY) === "true";
 
     if (!hasSeenIntro) {
       return;
     }
 
-    if (playbackState?.wasPlaying === false) {
+    if (!shouldAdvanceTrack && playbackState?.wasPlaying === false) {
       return;
     }
 
     const frameId = window.requestAnimationFrame(() => {
+      if (shouldAdvanceTrack) {
+        window.localStorage.removeItem(PLAY_NEXT_AFTER_LOGIN_KEY);
+      }
+
       window.dispatchEvent(
         new CustomEvent("humorproject:start-audio", {
           detail: {
-            fromBeginning: !playbackState || playbackState.currentTime <= 0,
+            fromBeginning:
+              shouldAdvanceTrack || !playbackState || playbackState.currentTime <= 0,
+            advanceTrack: shouldAdvanceTrack,
           },
         }),
       );

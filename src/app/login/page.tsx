@@ -3,6 +3,7 @@
 import { createClient } from "@/utils/supabase/client";
 
 const PLAYBACK_STATE_KEY = "introAudioPlaybackState";
+const PLAY_NEXT_AFTER_LOGIN_KEY = "humorprojectPlayNextAfterLogin";
 
 declare global {
   interface Window {
@@ -22,6 +23,7 @@ export default function LoginPage() {
         wasPlaying: true,
       }),
     );
+    window.localStorage.setItem(PLAY_NEXT_AFTER_LOGIN_KEY, "true");
 
     window.dispatchEvent(
       new CustomEvent("humorproject:start-audio", {
